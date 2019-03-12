@@ -3,8 +3,13 @@ IMAGE_NAME = nmaupu/vault-secret:latest
 
 .PHONY: all
 all:
+	$(MAKE) dep
 	$(MAKE) build
 	$(MAKE) push
+
+.PHONY: dep
+dep:
+	dep ensure -update
 
 .PHONY: build
 build:

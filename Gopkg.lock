@@ -311,7 +311,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:3ec6c33220a576a7cf2d2f036e29e3c3a1cee06d2845d97f8e9acdef159fc840"
+  digest = "1:cf6daa6b5c238c70fd26acdd7686b280ccc23752bcbd79e9287358e06f5c520f"
   name = "github.com/hashicorp/vault"
   packages = [
     "api",
@@ -323,8 +323,8 @@
     "helper/strutil",
   ]
   pruneopts = "NT"
-  revision = "dad2b6048153fea5efbc0c06a5f35c06c767b308"
-  version = "v0.11.6"
+  revision = "85909e3373aa743c34a6a0ab59131f61fd9e8e43"
+  version = "v1.0.3"
 
 [[projects]]
   digest = "1:aaa38889f11896ee3644d77e17dc7764cc47f5f3d3b488268df2af2b52541c5f"
@@ -351,12 +351,12 @@
   version = "v1.1.6"
 
 [[projects]]
-  digest = "1:6580262b9b5f34f6fc00e38f7ee32b9f90756b00765d2b14c234c50eef5a3015"
+  branch = "master"
+  digest = "1:4d9fc9400a35853fabc73db7891164c7e846b0c434dab4507573adf4402840f1"
   name = "github.com/lingrino/vaku"
   packages = ["vaku"]
   pruneopts = "NT"
-  revision = "e786f7c9f88c3ef73e0f2e3082e97cb3ef509cc0"
-  version = "v1.1.0"
+  revision = "e4857076f83d0e07a29e58302a085da30f70ba64"
 
 [[projects]]
   branch = "master"
@@ -673,7 +673,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:065d5fc35bbe23c413990fe68bba6fc5411d31510c79765e9df97beb503782db"
+  digest = "1:8b2f5cd3ac16c1977022b749197c831ad9467a8340593bad5cd102a088ec2cf7"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -690,7 +690,7 @@
     "internal/semver",
   ]
   pruneopts = "NT"
-  revision = "0bb0c0a6e84655f8baa6389e6dff9796ca1b26d2"
+  revision = "7b79afddac434519a8ca775cc575fddb0d162aab"
 
 [[projects]]
   digest = "1:902ffa11f1d8c19c12b05cabffe69e1a16608ad03a8899ebcb9c6bde295660ae"

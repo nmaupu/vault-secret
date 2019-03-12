@@ -1,5 +1,9 @@
 FROM alpine:3.8
 
+RUN apk update && \
+    apk add ca-certificates curl jq bash && \
+    rm -rf /var/cache/apk/*
+
 ENV OPERATOR=/usr/local/bin/vault-secret \
     USER_UID=1001 \
     USER_NAME=vault-secret

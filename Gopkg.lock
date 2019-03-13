@@ -1040,7 +1040,6 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/go-openapi/spec",
     "github.com/hashicorp/vault/api",
     "github.com/lingrino/vaku/vaku",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
@@ -1064,7 +1063,6 @@
     "k8s.io/code-generator/cmd/lister-gen",
     "k8s.io/gengo/args",
     "k8s.io/kube-openapi/cmd/openapi-gen",
-    "k8s.io/kube-openapi/pkg/common",
     "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/client/config",
     "sigs.k8s.io/controller-runtime/pkg/controller",

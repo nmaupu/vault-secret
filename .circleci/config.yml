@@ -59,6 +59,9 @@ jobs:
             - vendor-{{ .Branch }}-{{ .Revision }}
             - vendor-{{ .Branch }}-
             - vendor-
+      - restore_cache:
+          keys:
+            - version-{{ .Branch }}-{{ .Revision }}
       - setup_remote_docker
       - run:
           name: Docker login
@@ -68,10 +71,39 @@ jobs:
           name: Building application
           command: |
             cd $GOPATH/src/github.com/$ORG_NAME/$PROJECT_NAME
-            ls -l vendor/
             make build
             make push
             make openapi
+  prepare-release:
+    executor: golang-executor
+    steps:
+      - checkout
+      - run:
+          name: Preparing for release
+          command: |
+            make CI-release-prepare
+      - save_cache:
+          name: Saving cache for release version
+          key: release-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - release
+            - version/version.go
+  release-github:
+    executor: golang-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - version-{{ .Branch }}-{{ .Revision }}
+      - run:
+          name: Publish release on Github
+          command: |
+            go get github.com/tcnksm/ghr
+            cd $GOPATH/src/github.com/$ORG_NAME/$PROJECT_NAME
+            make version
+            VERSION=$(make version)
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} /tmp/release/
+
 workflows:
   version: 2.1
   main:
@@ -80,3 +112,18 @@ workflows:
       - build:
           requires:
             - prepare
+      - prepare-release:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+      - release-github:
+          requires:
+            - prepare-release
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^\d+\.\d+\.\d+$/

@@ -10,6 +10,7 @@ import (
 	"github.com/nmaupu/vault-secret/pkg/apis"
 	"github.com/nmaupu/vault-secret/pkg/controller"
 
+	appVersion "github.com/nmaupu/vault-secret/version"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
@@ -33,6 +34,7 @@ func printVersion() {
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
 	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
 	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
+	log.Info(fmt.Sprintf("Version of vault-secret operator: %v", appVersion.Version))
 }
 
 func main() {

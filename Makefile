@@ -14,7 +14,11 @@ clean:
 
 .PHONY: dep
 dep:
-	dep ensure
+	dep ensure -v
+
+.PHONY: dep-update
+dep-update:
+	dep ensure -update -v
 
 .PHONY: build
 build:
@@ -28,3 +32,7 @@ openapi:
 .PHONY: push
 push:
 	docker push $(IMAGE_NAME)
+
+.PHONY: test
+test:
+	go test -v ./...

@@ -1,0 +1,48 @@
+version: 2
+jobs:
+  build:
+    environment:
+      - DEP_VERSION: 0.5.1
+      - ORG_NAME: nmaupu
+      - PROJECT_NAME: vault-secret
+    docker:
+      - image: circleci/golang:1.10.0
+    working_directory: /go/src/github.com/$ORG_NAME/$PROJECT_NAME
+    steps:
+      - run:
+          name: Configuring git remote
+          command: git config --global url.ssh://git@github.com/.insteadOf https://github.com/
+      - checkout
+      - run:
+          name: Golang dep installation
+          command: |
+            if [ ! -d $GOPATH/src/github.com/$ORG_NAME/$PROJECT_NAME/vendor ]; then
+              curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
+              chmod +x $GOPATH/bin/dep
+              cd /go/src/github.com/$ORG_NAME/$PROJECT_NAME
+              make dep
+            fi
+      - run:
+          name: Operator-sdk installation
+          command: |
+            git clone https://github.com/operator-framework/operator-sdk $GOPATH/src/github.com/operator-framework/operator-sdk
+            cd $GOPATH/src/github.com/operator-framework/operator-sdk
+            make dep
+            make install
+      - setup_remote_docker
+      - run:
+          name: Docker login
+          command: |
+            echo $DOCKER_PASSWORD | docker login --username $DOCKER_LOGIN --password-stdin
+      - run:
+          name: Building application
+          command: |
+            cd /go/src/github.com/$ORG_NAME/$PROJECT_NAME
+            make build
+            make push
+            make openapi
+      - run:
+          name: Tests
+          command: |
+            cd /go/src/github.com/$ORG_NAME/$PROJECT_NAME
+            make test

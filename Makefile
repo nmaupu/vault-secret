@@ -41,8 +41,10 @@ test:
 
 .PHONY: CI-release
 CI-release-prepare:
-	mkdir -p release/bin release/deploy
-	cp -a deploy/* release/deploy
+	mkdir -p release/
+	cp -a deploy/*.yaml release/
+	cp -a deploy/crds/maupu_v1beta1_vaultsecret_crd.yaml release/
+	cp -a deploy/crds/maupu_v1beta1_vaultsecret_cr.yaml release/vault-secret-cr-example.yaml
 	sed -i -e "s/latest/$(CIRCLE_TAG)/g" version/version.go
 
 .PHONY: version

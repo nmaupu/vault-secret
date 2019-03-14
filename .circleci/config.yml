@@ -61,7 +61,7 @@ jobs:
             - vendor-
       - restore_cache:
           keys:
-            - version-{{ .Branch }}-{{ .Revision }}
+            - release-{{ .Revision }}
       - setup_remote_docker
       - run:
           name: Docker login
@@ -84,7 +84,7 @@ jobs:
             make CI-release-prepare
       - save_cache:
           name: Saving cache for release version
-          key: release-{{ .Branch }}-{{ .Revision }}
+          key: release-{{ .Revision }}
           paths:
             - release
             - version/version.go
@@ -94,15 +94,21 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - version-{{ .Branch }}-{{ .Revision }}
+            - release-{{ .Revision }}
       - run:
           name: Publish release on Github
           command: |
             go get github.com/tcnksm/ghr
             cd $GOPATH/src/github.com/$ORG_NAME/$PROJECT_NAME
-            make version
             VERSION=$(make version)
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} /tmp/release/
+            echo "Version to be released: ${VERSION}"
+            ghr -t ${GITHUB_TOKEN} \
+              -u ${CIRCLE_PROJECT_USERNAME} \
+              -r ${CIRCLE_PROJECT_REPONAME} \
+              -c ${CIRCLE_SHA1} \
+              -n "Release v${VERSION}" \
+              -delete \
+              ${VERSION} release/
 
 workflows:
   version: 2.1
@@ -112,7 +118,23 @@ workflows:
       - build:
           requires:
             - prepare
+  release:
+    jobs:
+      - prepare:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^\d+\.\d+\.\d+$/
       - prepare-release:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+      - build:
+          requires:
+            - prepare
           filters:
             branches:
               ignore: /.*/
@@ -120,6 +142,7 @@ workflows:
               only: /^\d+\.\d+\.\d+$/
       - release-github:
           requires:
+            - prepare
             - prepare-release
             - build
           filters:

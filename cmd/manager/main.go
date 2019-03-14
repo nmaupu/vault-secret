@@ -23,7 +23,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
 
-// Change below variables to serve metrics on different host or port.
 var (
 	metricsHost       = "0.0.0.0"
 	metricsPort int32 = 8383

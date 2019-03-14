@@ -1,5 +1,6 @@
 default: all
-IMAGE_NAME = nmaupu/vault-secret:latest
+APP_VERSION ?= latest
+IMAGE_NAME = nmaupu/vault-secret:${APP_VERSION}
 
 .PHONY: all
 all:
@@ -36,3 +37,7 @@ push:
 .PHONY: test
 test:
 	go test -v ./...
+
+release:
+	mkdir -p release/
+

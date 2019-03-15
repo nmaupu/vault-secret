@@ -43,6 +43,7 @@ test:
 CI-release-prepare:
 	mkdir -p release/manifests/crds
 	cp -a deploy/*.yaml release/manifests
+	sed -i -e "s/\(nmaupu.vault-secret\):latest$$/\1:$(CIRCLE_TAG)/g" release/operator.yaml
 	cp -a deploy/crds/maupu_v1beta1_vaultsecret_crd.yaml release/manifests/crds
 	cp -a deploy/crds/maupu_v1beta1_vaultsecret_cr.yaml release/manifests/crds/vault-secret-cr-example.yaml
 	tar cfz release/vault-secret-manifests-$(CIRCLE_TAG).tar.gz -C release manifests

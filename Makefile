@@ -50,6 +50,12 @@ CI-release-prepare:
 	rm -rf release/manifests/
 	sed -i -e "s/latest/$(CIRCLE_TAG)/g" version/version.go
 
+test-manifest:
+	mkdir -p release/manifests
+	cp deploy/operator.yaml release/manifests
+	sed -i -e "s/\(nmaupu.vault-secret\):latest$$/\1:$(CIRCLE_TAG)/g" release/manifests/operator.yaml
+
+
 .PHONY: CI-process-release
 CI-process-release:
 	cp ./build/_output/bin/vault-secret release/vault-secret-$(CIRCLE_TAG)-linux-amd64

@@ -59,7 +59,7 @@ jobs:
             - vendor-{{ .Branch }}-{{ .Revision }}-
       - restore_cache:
           keys:
-            - release-{{ .Revision }}
+            - release-{{ .Revision }}-{{ .Environment.CIRCLE_TAG }}
       - setup_remote_docker
       - run:
           name: Docker login
@@ -87,7 +87,7 @@ jobs:
             make CI-release-prepare
       - save_cache:
           name: Saving cache for release version
-          key: release-{{ .Revision }}
+          key: release-{{ .Revision }}-{{ .Environment.CIRCLE_TAG }}
           paths:
             - release
             - version/version.go
@@ -97,7 +97,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - release-{{ .Revision }}
+            - release-{{ .Revision }}-{{ .Environment.CIRCLE_TAG }}
       - restore_cache:
           keys:
             - build-{{ .Branch }}-{{ .Revision }}

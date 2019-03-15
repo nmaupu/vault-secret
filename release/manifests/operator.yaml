@@ -17,7 +17,7 @@ spec:
       containers:
         - name: vault-secret
           # Replace this with the built image name
-          image: nmaupu/vault-secret:latest
+          image: nmaupu/vault-secret:0.0.2
           imagePullPolicy: Always
           command:
           - vault-secret

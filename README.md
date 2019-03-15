@@ -1,3 +1,6 @@
+[![CircleCI](https://circleci.com/gh/nmaupu/vault-secret/tree/master.svg?style=shield)](https://circleci.com/gh/nmaupu/vault-secret/tree/master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nmaupu/vault-secret)](https://goreportcard.com/report/github.com/nmaupu/vault-secret)
+
 # Kubernetes Secrets from Hashicorp Vault
 
 **Problem:** My secret are stored in Vault, how can I inject them into Kubernetes secret ?

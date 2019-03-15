@@ -41,11 +41,25 @@ test:
 
 .PHONY: CI-release
 CI-release-prepare:
-	mkdir -p release/
-	cp -a deploy/*.yaml release/
-	cp -a deploy/crds/maupu_v1beta1_vaultsecret_crd.yaml release/
-	cp -a deploy/crds/maupu_v1beta1_vaultsecret_cr.yaml release/vault-secret-cr-example.yaml
+	mkdir -p release/manifests/crds
+	cp -a deploy/*.yaml release/manifests
+	cp -a deploy/crds/maupu_v1beta1_vaultsecret_crd.yaml release/manifests/crds
+	cp -a deploy/crds/maupu_v1beta1_vaultsecret_cr.yaml release/manifests/crds/vault-secret-cr-example.yaml
+	tar cfz release/vault-secret-manifests-$(CIRCLE_TAG).tar.gz -C release manifests
+	rm -rf release/manifests/
 	sed -i -e "s/latest/$(CIRCLE_TAG)/g" version/version.go
+
+.PHONY: CI-process-release
+CI-process-release:
+	cp ./build/_output/bin/vault-secret release/vault-secret-$(CIRCLE_TAG)-linux-amd64
+	@echo "Version to be released: $(CIRCLE_TAG)"
+	ghr -t $(GITHUB_TOKEN) \
+		-u $(CIRCLE_PROJECT_USERNAME) \
+		-r $(CIRCLE_PROJECT_REPONAME) \
+		-c $(CIRCLE_SHA1) \
+		-n "Release v$(CIRCLE_TAG)" \
+		-delete \
+		$(CIRCLE_TAG) release/
 
 .PHONY: version
 version:

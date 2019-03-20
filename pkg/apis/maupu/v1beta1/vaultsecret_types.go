@@ -15,6 +15,7 @@ type VaultSecretSpec struct {
 	TargetNamespace string                  `json:"targetNamespace,omitempty"`
 }
 
+// Configuration part of a vault-secret object
 // +k8s:openapi-gen=true
 type VaultSecretSpecConfig struct {
 	Addr     string                    `json:"addr,required"`
@@ -22,7 +23,7 @@ type VaultSecretSpecConfig struct {
 	Auth     VaultSecretSpecConfigAuth `json:"auth,required"`
 }
 
-// +k8s:openapi-gen=true
+// Mean of authentication for Vault
 type VaultSecretSpecConfigAuth struct {
 	Token      string `json:"token, omitempty"`
 	Kubernetes struct {
@@ -36,6 +37,7 @@ type VaultSecretSpecConfigAuth struct {
 	} `json:"approle,omitempty"`
 }
 
+// Define secrets to create from Vault
 // +k8s:openapi-gen=true
 type VaultSecretSpecSecret struct {
 	// Key name in the secret to create
@@ -46,11 +48,13 @@ type VaultSecretSpecSecret struct {
 	Field string `json:"field,required"`
 }
 
+// Status field regarding last custom resource process
 // +k8s:openapi-gen=true
 type VaultSecretStatus struct {
 	Entries []VaultSecretStatusEntry `json:"entries,omitempty"`
 }
 
+// Entry for the status field
 // +k8s:openapi-gen=true
 type VaultSecretStatusEntry struct {
 	Secret    VaultSecretSpecSecret `json:"secret,required"`

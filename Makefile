@@ -14,16 +14,19 @@ clean:
 	rm -f pkg/apis/maupu/v1beta1/zz_*
 	rm -rf release/
 
-.PHONY: dep
-dep:
+vendor:
 	dep ensure -v
+
+.PHONY: dep
+dep: vendor
+	true
 
 .PHONY: dep-update
 dep-update:
 	dep ensure -update -v
 
 .PHONY: build
-build:
+build: vendor
 	operator-sdk generate k8s
 	operator-sdk build $(IMAGE_NAME)
 

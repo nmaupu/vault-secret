@@ -29,6 +29,7 @@ func NewKubernetesProvider(role, cluster string) *KubernetesProvider {
 }
 
 func (k KubernetesProvider) Login(c *VaultConfig) (*vapi.Client, error) {
+	log.Info("Authenticating using Kubernetes auth method")
 	config := vapi.DefaultConfig()
 	config.Address = c.Address
 	config.HttpClient.Transport = &http.Transport{

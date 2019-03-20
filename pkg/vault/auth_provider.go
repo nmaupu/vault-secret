@@ -2,6 +2,11 @@ package vault
 
 import (
 	vapi "github.com/hashicorp/vault/api"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+)
+
+var (
+	log = logf.Log.WithName("vault-auth-provider")
 )
 
 type VaultConfig struct {

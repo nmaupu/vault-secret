@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  digest = "1:89466af8539a865174ebd3ed9b6e52a01d213c392201fe985682a308a208dee0"
+  digest = "1:67b2773a8c2c3e2af80ee9f34cc969b769257e8ba5b82c719b8a19d684c9f321"
   name = "cloud.google.com/go"
   packages = ["compute/metadata"]
   pruneopts = "NT"
-  revision = "f52f9bc132541d2aa914f42100c36d10b1ef7e0c"
-  version = "v0.37.0"
+  revision = "2fa99f4c25c422525316dcb1fd3d5b94e1944cfd"
+  version = "v0.37.1"
 
 [[projects]]
   digest = "1:0a111edd8693fd977f42a0c4f199a0efb13c20aec9da99ad8830c7bb6a87e8d6"
@@ -165,7 +165,7 @@
   revision = "5b532d6fd5efaf7fa130d4e859a2fde0fc3a9e1b"
 
 [[projects]]
-  digest = "1:2bac1ab777481a7ef169837f0eeac25a1a6628ac93aef853168681dfec4a653c"
+  digest = "1:d7212166c4b7f30a20fb3de70ab7e36564900b2e36360ffd31958b5af8fed025"
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -175,8 +175,8 @@
     "ptypes/timestamp",
   ]
   pruneopts = "NT"
-  revision = "c823c79ea1570fb5ff454033735a8e68575d1d0f"
-  version = "v1.3.0"
+  revision = "b5d812f8a3706043e23a9cd5babf2e5423744d30"
+  version = "v1.3.1"
 
 [[projects]]
   digest = "1:2975cea4b68121134776e0f636a4b0d260575b0e35c3fc9f513fdcc94e623cb9"
@@ -242,12 +242,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:a5d940c38bf56f121721bfa747c66356df387cb9d5318c570c6d4170aab62862"
+  digest = "1:fff05cb0c34d2decaeb27bb6ab6b73a6947c3009d725160070da55f9511fd410"
   name = "github.com/hashicorp/go-cleanhttp"
   packages = ["."]
   pruneopts = "NT"
-  revision = "e8ab9daed8d1ddd2d3c4efba338fe2eeae2e4f18"
-  version = "v0.5.0"
+  revision = "eda1e5db218aad1db63ca4642c8906b26bcf2744"
+  version = "v0.5.1"
 
 [[projects]]
   digest = "1:2ed138049ab373f696db2081ca48f15c5abdf20893803612a284f2bdce2bf443"
@@ -311,7 +311,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:cf6daa6b5c238c70fd26acdd7686b280ccc23752bcbd79e9287358e06f5c520f"
+  digest = "1:8f536f2f336f73106833bffe8b5bf17fe8d75b03d3eeae96aeb0de8260923ea5"
   name = "github.com/hashicorp/vault"
   packages = [
     "api",
@@ -323,8 +323,8 @@
     "helper/strutil",
   ]
   pruneopts = "NT"
-  revision = "85909e3373aa743c34a6a0ab59131f61fd9e8e43"
-  version = "v1.0.3"
+  revision = "36aa8c8dd1936e10ebd7a4c1d412ae0e6f7900bd"
+  version = "v1.1.0"
 
 [[projects]]
   digest = "1:aaa38889f11896ee3644d77e17dc7764cc47f5f3d3b488268df2af2b52541c5f"
@@ -349,14 +349,6 @@
   pruneopts = "NT"
   revision = "0ff49de124c6f76f8494e194af75bde0f1a49a29"
   version = "v1.1.6"
-
-[[projects]]
-  branch = "master"
-  digest = "1:4d9fc9400a35853fabc73db7891164c7e846b0c434dab4507573adf4402840f1"
-  name = "github.com/lingrino/vaku"
-  packages = ["vaku"]
-  pruneopts = "NT"
-  revision = "e4857076f83d0e07a29e58302a085da30f70ba64"
 
 [[projects]]
   branch = "master"
@@ -420,7 +412,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7a2a167f59c55033c3eca3f4e59fd9d9247861aab655d022b1466d04de71c175"
+  digest = "1:42bb8c5af37ed30491ebf84247feb37a56f1fdb4eef4b53e12b4f16b0872866e"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
     "pkg/k8sutil",
@@ -430,7 +422,7 @@
     "version",
   ]
   pruneopts = "NT"
-  revision = "153a59c0a501dc17198e3e769c0103c78eb206c6"
+  revision = "8aad21a7c3fb1648e305363a80aef9bddc57d398"
 
 [[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
@@ -509,7 +501,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1c282f5c094061ce301d1ea3098799fc907ac1399e9f064c463787323a7b7340"
+  digest = "1:412affe2853f32d2b75fc1beaec432e220945cb593d7b8718059c5029c9db60c"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
@@ -519,7 +511,7 @@
     "xfs",
   ]
   pruneopts = "NT"
-  revision = "d0f344d83b0c80a1bc03b547a2374a9ec6711144"
+  revision = "40f3c57fb1983891f95378042bd0bfd590f52384"
 
 [[projects]]
   digest = "1:fcef1ce61da6f8f6f115154fb0e0e5b159fe11656839ba1e6061372711c013ee"
@@ -597,11 +589,11 @@
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "NT"
-  revision = "c2843e01d9a2bc60bb26ad24e09734fdc2d9ec58"
+  revision = "a1f597ede03a7bef967a422b5b3a5bd08805a01e"
 
 [[projects]]
   branch = "master"
-  digest = "1:e4b8752f1341b29443bcc664ab1653602b02c87562ad156f26f66c04cef7946c"
+  digest = "1:0b3ce72ef4cea2c47ec21b6c311dd707545bd302d7dc0694eb217188aafcd24d"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -612,11 +604,11 @@
     "idna",
   ]
   pruneopts = "NT"
-  revision = "d8887717615a059821345a5c23649351b52a1c0b"
+  revision = "1272bf9dcd53ea65c09668fb4c76e65deb740072"
 
 [[projects]]
   branch = "master"
-  digest = "1:3418b2325cb0e56bb54774c4e484a2d8829b1fe4bad1c5f077cfd08d138a9a9f"
+  digest = "1:b84971d4821db3a4e63952059b159d9ff27ea373903d1545b02f7984469c8f92"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
@@ -626,18 +618,18 @@
     "jwt",
   ]
   pruneopts = "NT"
-  revision = "e64efc72b421e893cbf63f17ba2221e7d6d0b0f3"
+  revision = "c85d3e98c914e3a33234ad863dcbff5dbc425bb8"
 
 [[projects]]
   branch = "master"
-  digest = "1:a33a417cd198f3bb1b38a13cd408d78371c7902b60178f089f140f1e2a5ec6be"
+  digest = "1:76c23b62b9f9d8bf88afe67041572b138a5051ee2dbf9e858a6bbfbd00f6a815"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "NT"
-  revision = "fead79001313d15903fb4605b4a1b781532cd93e"
+  revision = "6c81ef8f67ca3f42fc9cd71dfbd5f35b0c4b5771"
 
 [[projects]]
   digest = "1:8c74f97396ed63cc2ef04ebb5fc37bb032871b8fd890a25991ed40974b00cd2a"
@@ -673,7 +665,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8b2f5cd3ac16c1977022b749197c831ad9467a8340593bad5cd102a088ec2cf7"
+  digest = "1:456c80d9d81fd1e9a6a7ba9aa18f4f2c9b1973cd210733e44b97899024d1193f"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -690,7 +682,7 @@
     "internal/semver",
   ]
   pruneopts = "NT"
-  revision = "7b79afddac434519a8ca775cc575fddb0d162aab"
+  revision = "3f1ed9edd1b43b011064eb59e5c9e73f5537ddd9"
 
 [[projects]]
   digest = "1:902ffa11f1d8c19c12b05cabffe69e1a16608ad03a8899ebcb9c6bde295660ae"
@@ -937,7 +929,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a9f99f1c11620be972d49d2e4e296031a5fbc168ada49a9e618d9b35f751f119"
+  digest = "1:a6612481318c8360823cb6e157cf103c5eb03a8a9e24f58bfc1021ebd9cde3de"
   name = "k8s.io/gengo"
   packages = [
     "args",
@@ -950,7 +942,7 @@
     "types",
   ]
   pruneopts = "T"
-  revision = "b90029ef6cd877cb3f422d75b3a07707e3aac6b7"
+  revision = "bc9033e9ec9e0cec1552e9af7c079cb878dfc511"
 
 [[projects]]
   digest = "1:29f93bb84d907a2c035e729e19d66fe52165d8c905cb3ef1920140d76ae6afaf"
@@ -1041,7 +1033,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/hashicorp/vault/api",
-    "github.com/lingrino/vaku/vaku",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/pkg/leader",
     "github.com/operator-framework/operator-sdk/pkg/log/zap",

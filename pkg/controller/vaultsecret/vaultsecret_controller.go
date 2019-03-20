@@ -2,8 +2,8 @@ package vaultsecret
 
 import (
 	"context"
+	goerrors "errors"
 	"fmt"
-	"github.com/lingrino/vaku/vaku"
 	maupuv1beta1 "github.com/nmaupu/vault-secret/pkg/apis/maupu/v1beta1"
 	nmvault "github.com/nmaupu/vault-secret/pkg/vault"
 	corev1 "k8s.io/api/core/v1"
@@ -21,7 +21,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logf.Log.WithName("controller_vaultsecret")
+const (
+	ControllerName = "vaultsecret-controller"
+)
+
+var log = logf.Log.WithName(ControllerName)
 
 // Add creates a new VaultSecret Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -37,7 +41,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
-	c, err := controller.New("vaultsecret-controller", mgr, controller.Options{Reconciler: r})
+	c, err := controller.New(ControllerName, mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
 	}
@@ -72,18 +76,15 @@ type ReconcileVaultSecret struct {
 
 // Reconcile reads that state of the cluster for a VaultSecret object and makes changes based on the state read
 // and what is in the VaultSecret.Spec
-// TODO(user): Modify this Reconcile function to implement your Controller logic.  This example creates
-// a Pod as an example
-// Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling VaultSecret")
 
-	// Fetch the VaultSecret instance
-	instance := &maupuv1beta1.VaultSecret{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	// Fetch the VaultSecret CRInstance
+	CRInstance := &maupuv1beta1.VaultSecret{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, CRInstance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -95,46 +96,65 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 		return reconcile.Result{}, err
 	}
 
-	// Define a new Pod object
-	mySecret, err := newSecretForCR(instance)
-	if err != nil {
+	// Define a new Secret object from CR specs
+	secretFromCR, err := newSecretForCR(CRInstance)
+	if err != nil && secretFromCR == nil {
+		// An error occured, requeue
+		return reconcile.Result{}, err
+	} else if err != nil && secretFromCR != nil {
+		// Some vault path and/or fields are not found, update CR (status) and requeue
+		r.client.Update(context.TODO(), CRInstance)
 		return reconcile.Result{}, err
 	}
 
-	// Set VaultSecret instance as the owner and controller
-	if err := controllerutil.SetControllerReference(instance, mySecret, r.scheme); err != nil {
+	// Everything's ok
+
+	// Set VaultSecret CRInstance as the owner and controller
+	if err = controllerutil.SetControllerReference(CRInstance, secretFromCR, r.scheme); err != nil {
 		return reconcile.Result{}, err
 	}
 
+	// Creating or updating secret resource from CR
 	// Check if this Secret already exists
 	found := &corev1.Secret{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: mySecret.Name, Namespace: mySecret.Namespace}, found)
-	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new Secret", "Secret.Namespace", mySecret.Namespace, "Secret.Name", mySecret.Name)
-		err = r.client.Create(context.TODO(), mySecret)
-		if err != nil {
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: secretFromCR.Name, Namespace: secretFromCR.Namespace}, found)
+	if err != nil && !errors.IsNotFound(err) {
+		// Error is not of type "is not found"
+		// An error occured, requeue
+		return reconcile.Result{}, err
+	} else if err != nil && errors.IsNotFound(err) {
+		// Secret does not exist, creating it
+		reqLogger.Info(fmt.Sprintf("Creating new Secret %s/%s", secretFromCR.Namespace, secretFromCR.Name))
+		if err = r.client.Create(context.TODO(), secretFromCR); err != nil {
 			return reconcile.Result{}, err
 		}
+	} else {
+		// Secret already exists - updating
+		reqLogger.Info(fmt.Sprintf("Reconcile: Secret %s/%s already exists, updating", found.Namespace, found.Name))
+		if err = r.client.Update(context.TODO(), secretFromCR); err != nil {
+			return reconcile.Result{}, err
+		}
+	}
 
-		// Secret created successfully - don't requeue
-		return reconcile.Result{}, nil
-	} else if err != nil {
+	// No problem creating or updating secret, updating CR info
+	if err = r.client.Update(context.TODO(), CRInstance); err != nil {
+		// Error updating CR, requeue
 		return reconcile.Result{}, err
 	}
 
-	// Secret already exists - don't requeue
-	reqLogger.Info("Skip reconcile: Secret already exists", "Secret.Namespace", found.Namespace, "Secret.Name", found.Name)
+	// finally, don't requeue
 	return reconcile.Result{}, nil
 }
 
 func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 	labels := map[string]string{
-		"app": cr.Name,
+		"crName":     cr.Name,
+		"controller": ControllerName,
 	}
 
 	secretName := cr.Spec.SecretName
 	if secretName == "" {
-		secretName = cr.Name + "-secret"
+		secretName = cr.Name
 	}
 
 	targetNamespace := cr.Spec.TargetNamespace
@@ -142,54 +162,70 @@ func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 		targetNamespace = cr.Namespace
 	}
 
-	// Determining vault auth provider from configuration
-	var provider nmvault.VaultAuthProvider
-	if cr.Spec.Config.Auth.Token != "" {
-		provider = nmvault.NewTokenProvider(cr.Spec.Config.Auth.Token)
-	} else if cr.Spec.Config.Auth.AppRole.RoleID != "" {
-		appRoleName := "approle"
-		if cr.Spec.Config.Auth.AppRole.Name != "" {
-			appRoleName = cr.Spec.Config.Auth.AppRole.Name
-		}
-		provider = nmvault.NewAppRoleProvider(
-			appRoleName,
-			cr.Spec.Config.Auth.AppRole.RoleID,
-			cr.Spec.Config.Auth.AppRole.SecretID,
-		)
-	} else if cr.Spec.Config.Auth.Kubernetes.Role != "" {
-		provider = nmvault.NewKubernetesProvider(
-			cr.Spec.Config.Auth.Kubernetes.Role,
-			cr.Spec.Config.Auth.Kubernetes.Cluster,
-		)
+	// Authentication provider
+	authProvider, err := cr.GetVaultAuthProvider()
+	if err != nil {
+		return nil, err
 	}
 
 	// Processing vault login
 	vaultConfig := nmvault.NewVaultConfig(cr.Spec.Config.Addr)
 	vaultConfig.Insecure = cr.Spec.Config.Insecure
-	vclient, err := provider.Login(vaultConfig)
+	vclient, err := authProvider.Login(vaultConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	// Creating client
-	vakuClient := vaku.NewClientFromVaultClient(vclient)
-
-	// Creating secrets' data from CR
+	// Init
+	hasError := false
 	secrets := map[string][]byte{}
+	// Clear status slice
+	cr.Status.Entries = nil
+	// Creating secret data from CR
 	for _, s := range cr.Spec.Secrets {
-		pInput := vaku.NewPathInput(s.Path)
-		sec, err := vakuClient.PathRead(pInput)
+		errMessage := ""
+		rootErrMessage := ""
+		status := true
+
+		// Vault read
+		sec, err := nmvault.Read(vclient, s.Path)
+
 		if err != nil {
-			log.Info(fmt.Sprintf("Secret not found: %s !", s.Path))
-		} else {
-			if sec != nil && sec[s.Field] != nil {
-				secrets[s.SecretKey] = ([]byte)(sec[s.Field].(string))
-			} else {
-				log.Info(fmt.Sprintf("Secret key not found: %s#%s is nil !", s.Path, s.Field))
+			hasError = true
+			if err != nil {
+				rootErrMessage = err.Error()
 			}
+			errMessage = "Problem occured getting secret"
+			status = false
+		} else if sec == nil || sec[s.Field] == nil || sec[s.Field] == "" {
+			hasError = true
+			if err != nil {
+				rootErrMessage = err.Error()
+			}
+			errMessage = "Secret field not found in vault"
+			status = false
+		} else {
+			status = true
+			secrets[s.SecretKey] = ([]byte)(sec[s.Field].(string))
 		}
+
+		// Updating CR Status field
+		cr.Status.Entries = append(cr.Status.Entries, maupuv1beta1.VaultSecretStatusEntry{
+			Secret:    s,
+			Status:    status,
+			Message:   errMessage,
+			RootError: rootErrMessage,
+		})
 	}
 
+	// Handle return
+	// Error is returned along with secret if it occured at least once during loop
+	// In case of error, we return a half populated secret object that caller has to handle itself
+	var retErr error
+	retErr = nil
+	if hasError {
+		retErr = goerrors.New(fmt.Sprintf("Secret %s cannot be created, see CR Status field for details", cr.Spec.SecretName))
+	}
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
@@ -197,5 +233,5 @@ func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 			Labels:    labels,
 		},
 		Data: secrets,
-	}, nil
+	}, retErr
 }

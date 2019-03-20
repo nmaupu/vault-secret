@@ -21,6 +21,7 @@ func NewTokenProvider(token string) *TokenProvider {
 }
 
 func (t TokenProvider) Login(c *VaultConfig) (*vapi.Client, error) {
+	log.Info("Authenticating using Token auth method")
 	config := vapi.DefaultConfig()
 	config.Address = c.Address
 	config.HttpClient.Transport = &http.Transport{

@@ -24,6 +24,7 @@ func NewAppRoleProvider(appRoleName, roleID, secretID string) *AppRoleProvider {
 }
 
 func (a AppRoleProvider) Login(c *VaultConfig) (*vapi.Client, error) {
+	log.Info("Authenticating using AppRole auth method")
 	config := vapi.DefaultConfig()
 	config.Address = c.Address
 	config.HttpClient.Transport = &http.Transport{

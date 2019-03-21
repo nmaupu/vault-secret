@@ -96,8 +96,8 @@ The section `kubernetes` takes two arguments:
     addr: https://vault.example.com
     auth:
       approle:
-        role_id: <myroleid>
-        secret_id: <mysecretid>
+        roleId: <myroleid>
+        secretId: <mysecretid>
 ```
 
 If several configuration options are specified, there are used in the following order:

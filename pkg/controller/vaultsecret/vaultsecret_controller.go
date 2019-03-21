@@ -121,7 +121,6 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 	// Check if this Secret already exists
 	found := &corev1.Secret{}
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: secretFromCR.Name, Namespace: secretFromCR.Namespace}, found)
-	reqLogger.Info(fmt.Sprintf("found=%v, err=%v", found, err))
 	if err != nil && errors.IsNotFound(err) {
 		// Secret does not exist, creating it
 		reqLogger.Info(fmt.Sprintf("Creating new Secret %s/%s", secretFromCR.Namespace, secretFromCR.Name))

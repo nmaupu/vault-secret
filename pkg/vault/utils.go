@@ -39,7 +39,9 @@ func Read(vc *vapi.Client, p string) (map[string]interface{}, error) {
 			return nil, err
 		}
 
-		data = sec.Data["data"].(map[string]interface{})
+		if sec != nil && sec.Data != nil && sec.Data["data"] != nil {
+			data = sec.Data["data"].(map[string]interface{})
+		}
 	} else {
 		data = sec.Data
 	}

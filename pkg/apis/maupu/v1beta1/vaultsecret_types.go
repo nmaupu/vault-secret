@@ -1,8 +1,6 @@
 package v1beta1
 
 import (
-	"errors"
-	nmvault "github.com/nmaupu/vault-secret/pkg/vault"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -16,7 +14,6 @@ type VaultSecretSpec struct {
 }
 
 // Configuration part of a vault-secret object
-// +k8s:openapi-gen=true
 type VaultSecretSpecConfig struct {
 	Addr     string                    `json:"addr,required"`
 	Insecure bool                      `json:"insecure,omitempty"`
@@ -25,20 +22,19 @@ type VaultSecretSpecConfig struct {
 
 // Mean of authentication for Vault
 type VaultSecretSpecConfigAuth struct {
-	Token      string `json:"token, omitempty"`
+	Token      string `json:"token,omitempty"`
 	Kubernetes struct {
 		Role    string `json:"role,required"`
 		Cluster string `json:"cluster,required"`
 	} `json:"kubernetes,omitempty"`
 	AppRole struct {
-		Name     string `json:"name,omitemty"`
-		RoleID   string `json:"role_id,required"`
-		SecretID string `json:"secret_id,required"`
+		Name     string `json:"name,omitempty"`
+		RoleID   string `json:"roleId,required"`
+		SecretID string `json:"secretId,required"`
 	} `json:"approle,omitempty"`
 }
 
 // Define secrets to create from Vault
-// +k8s:openapi-gen=true
 type VaultSecretSpecSecret struct {
 	// Key name in the secret to create
 	SecretKey string `json:"secretKey,required"`
@@ -55,7 +51,6 @@ type VaultSecretStatus struct {
 }
 
 // Entry for the status field
-// +k8s:openapi-gen=true
 type VaultSecretStatusEntry struct {
 	Secret    VaultSecretSpecSecret `json:"secret,required"`
 	Status    bool                  `json:"status,required"`
@@ -86,32 +81,4 @@ type VaultSecretList struct {
 
 func init() {
 	SchemeBuilder.Register(&VaultSecret{}, &VaultSecretList{})
-}
-
-// Get VaultAuthProvider implem from custom resource object
-func (cr *VaultSecret) GetVaultAuthProvider() (nmvault.VaultAuthProvider, error) {
-	// Checking order:
-	//   - Token
-	//   - AppRole
-	//   - Kubernetes Auth Method
-	if cr.Spec.Config.Auth.Token != "" {
-		return nmvault.NewTokenProvider(cr.Spec.Config.Auth.Token), nil
-	} else if cr.Spec.Config.Auth.AppRole.RoleID != "" {
-		appRoleName := "approle" // Default approle name value
-		if cr.Spec.Config.Auth.AppRole.Name != "" {
-			appRoleName = cr.Spec.Config.Auth.AppRole.Name
-		}
-		return nmvault.NewAppRoleProvider(
-			appRoleName,
-			cr.Spec.Config.Auth.AppRole.RoleID,
-			cr.Spec.Config.Auth.AppRole.SecretID,
-		), nil
-	} else if cr.Spec.Config.Auth.Kubernetes.Role != "" {
-		return nmvault.NewKubernetesProvider(
-			cr.Spec.Config.Auth.Kubernetes.Role,
-			cr.Spec.Config.Auth.Kubernetes.Cluster,
-		), nil
-	}
-
-	return nil, errors.New("Cannot find a way to authenticate, please choose between Token, AppRole or Kubernetes")
 }

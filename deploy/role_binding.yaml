@@ -6,6 +6,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: default
+  namespace: nma
 roleRef:
   kind: Role
   name: vault-secret-role

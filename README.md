@@ -9,6 +9,13 @@
 
 # Installation
 
+## Kubernetes version requirements
+
+This operator is supported from **Kubernetes `1.10`**.
+
+If using *Kubernetes 1.10* version, the feature gate `CustomResourceSubresources` must be enabled for the Custom Resource status field to get updated!
+This feature is enabled by default starting from *Kubernetes 1.11*.
+
 ## Operator
 
 Get the latest release from https://github.com/nmaupu/vault-secret/releases

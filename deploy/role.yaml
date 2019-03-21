@@ -8,17 +8,15 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - secrets
+  - pods
   - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
   - configmaps
+  - secrets
   verbs:
   - '*'
-- apiGroups:
-  - extensions
-  resources:
-  - replicasets
-  - deployments
-  verbs: ["get", "watch", "list"]
 - apiGroups:
   - ""
   resources:
@@ -26,8 +24,32 @@ rules:
   verbs:
   - get
 - apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - '*'
+- apiGroups:
+  - extensions
+  resources:
+  - replicasets
+  - deployments
+  verbs:
+  - '*'
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
+  verbs:
+  - get
+  - create
+- apiGroups:
   - maupu.org
   resources:
+  - '*'
   - vaultsecrets
-  verbs: ["get", "watch", "list", "update", "patch"]
-
+  verbs:
+  - '*'

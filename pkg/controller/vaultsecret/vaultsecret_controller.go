@@ -103,7 +103,10 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 		return reconcile.Result{}, err
 	} else if err != nil && secretFromCR != nil {
 		// Some vault path and/or fields are not found, update CR (status) and requeue
-		r.client.Update(context.TODO(), CRInstance)
+		reqLogger.Info("Some errors have been issued in the CR status information, please check")
+		if updateErr := r.client.Status().Update(context.TODO(), CRInstance); updateErr != nil {
+			reqLogger.Info(fmt.Sprintf("Error occured when updating CR status: %v", updateErr))
+		}
 		return reconcile.Result{}, err
 	}
 
@@ -118,38 +121,32 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 	// Check if this Secret already exists
 	found := &corev1.Secret{}
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: secretFromCR.Name, Namespace: secretFromCR.Namespace}, found)
-	if err != nil && !errors.IsNotFound(err) {
-		// Error is not of type "is not found"
-		// An error occured, requeue
-		return reconcile.Result{}, err
-	} else if err != nil && errors.IsNotFound(err) {
+	reqLogger.Info(fmt.Sprintf("found=%v, err=%v", found, err))
+	if err != nil && errors.IsNotFound(err) {
 		// Secret does not exist, creating it
 		reqLogger.Info(fmt.Sprintf("Creating new Secret %s/%s", secretFromCR.Namespace, secretFromCR.Name))
-		if err = r.client.Create(context.TODO(), secretFromCR); err != nil {
-			return reconcile.Result{}, err
-		}
+		err = r.client.Create(context.TODO(), secretFromCR)
 	} else {
 		// Secret already exists - updating
 		reqLogger.Info(fmt.Sprintf("Reconcile: Secret %s/%s already exists, updating", found.Namespace, found.Name))
-		if err = r.client.Update(context.TODO(), secretFromCR); err != nil {
-			return reconcile.Result{}, err
-		}
+		err = r.client.Update(context.TODO(), secretFromCR)
 	}
 
 	// No problem creating or updating secret, updating CR info
-	if err = r.client.Update(context.TODO(), CRInstance); err != nil {
-		// Error updating CR, requeue
-		return reconcile.Result{}, err
+	reqLogger.Info("Updating CR status information")
+	if updateErr := r.client.Status().Update(context.TODO(), CRInstance); updateErr != nil {
+		reqLogger.Info(fmt.Sprintf("Error occured when updating CR status: %v", updateErr))
 	}
 
-	// finally, don't requeue
-	return reconcile.Result{}, nil
+	// finally return giving err (nil if not problem occured, set to something otherwise)
+	return reconcile.Result{}, err
 }
 
 func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 	labels := map[string]string{
-		"crName":     cr.Name,
-		"controller": ControllerName,
+		"crName":      cr.Name,
+		"crNamespace": cr.Namespace,
+		"controller":  ControllerName,
 	}
 
 	secretName := cr.Spec.SecretName

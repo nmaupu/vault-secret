@@ -117,8 +117,3 @@ This task will:
 - create a docker image
 
 You can then push it to any docker repository or use it locally.
-
-# TODO
-
-- CI and release upload on git tag (travis ?)
-- better error handling when a key does not exist in vault (returning an error or just a log ?)

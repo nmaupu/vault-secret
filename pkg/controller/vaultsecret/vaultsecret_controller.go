@@ -14,8 +14,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -26,6 +28,17 @@ const (
 )
 
 var log = logf.Log.WithName(ControllerName)
+
+// Fitlering events on labels
+var LabelsFilter map[string]string
+
+func AddLabelFilter(key, value string) {
+	if LabelsFilter == nil {
+		LabelsFilter = make(map[string]string)
+	}
+
+	LabelsFilter[key] = value
+}
 
 // Add creates a new VaultSecret Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -46,8 +59,25 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	// Create a predicate to filter incoming events on configured labels filter
+	pred := predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			objectLabels := e.Meta.GetLabels()
+			for lfk, lfv := range LabelsFilter {
+				if val, ok := objectLabels[lfk]; ok {
+					if val != lfv {
+						return false
+					}
+				} else {
+					return false
+				}
+			}
+
+			return true
+		},
+	}
 	// Watch for changes to primary resource VaultSecret
-	err = c.Watch(&source.Kind{Type: &maupuv1beta1.VaultSecret{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &maupuv1beta1.VaultSecret{}}, &handler.EnqueueRequestForObject{}, pred)
 	if err != nil {
 		return err
 	}
@@ -56,7 +86,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	err = c.Watch(&source.Kind{Type: &corev1.Secret{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &maupuv1beta1.VaultSecret{},
-	})
+	}, pred)
 	if err != nil {
 		return err
 	}
@@ -103,9 +133,9 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 		return reconcile.Result{}, err
 	} else if err != nil && secretFromCR != nil {
 		// Some vault path and/or fields are not found, update CR (status) and requeue
-		reqLogger.Info("Some errors have been issued in the CR status information, please check")
+		reqLogger.Error(err, "Some errors have been issued in the CR status information, please check")
 		if updateErr := r.client.Status().Update(context.TODO(), CRInstance); updateErr != nil {
-			reqLogger.Info(fmt.Sprintf("Error occured when updating CR status: %v", updateErr))
+			reqLogger.Error(updateErr, "Error occured when updating CR status")
 		}
 		return reconcile.Result{}, err
 	}
@@ -127,14 +157,14 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 		err = r.client.Create(context.TODO(), secretFromCR)
 	} else {
 		// Secret already exists - updating
-		reqLogger.Info(fmt.Sprintf("Reconcile: Secret %s/%s already exists, updating", found.Namespace, found.Name))
+		reqLogger.Info(fmt.Sprintf("Reconciling existing Secret %s/%s", found.Namespace, found.Name))
 		err = r.client.Update(context.TODO(), secretFromCR)
 	}
 
 	// No problem creating or updating secret, updating CR info
 	reqLogger.Info("Updating CR status information")
 	if updateErr := r.client.Status().Update(context.TODO(), CRInstance); updateErr != nil {
-		reqLogger.Info(fmt.Sprintf("Error occured when updating CR status: %v", updateErr))
+		reqLogger.Error(updateErr, "Error occured when updating CR status")
 	}
 
 	// finally return giving err (nil if not problem occured, set to something otherwise)
@@ -147,15 +177,14 @@ func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 		"crNamespace": cr.Namespace,
 		"controller":  ControllerName,
 	}
+	// Adding filtered labels
+	for key, val := range LabelsFilter {
+		labels[key] = val
+	}
 
 	secretName := cr.Spec.SecretName
 	if secretName == "" {
 		secretName = cr.Name
-	}
-
-	targetNamespace := cr.Spec.TargetNamespace
-	if targetNamespace == "" {
-		targetNamespace = cr.Namespace
 	}
 
 	// Authentication provider
@@ -225,7 +254,7 @@ func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
-			Namespace: targetNamespace,
+			Namespace: cr.Namespace,
 			Labels:    labels,
 		},
 		Data: secrets,

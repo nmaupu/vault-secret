@@ -29,6 +29,26 @@ $ kubectl apply -f deploy/role_binding.yaml
 $ kubectl apply -f deploy/operator.yaml
 ```
 
+### Configuration
+
+#### Env vars
+
+Operator can be configured to watch a unique namespace or can also be cluster wide. In that case, modify RBAC role and role binding to be cluster scoped.
+The following environment variables are available to configure the operator:
+- `WATCH_NAMESPACE`: Namespace to watch for new CR, if not defined, the operator will be cluster scoped
+- `OPERATOR_NAME`: Name of the operator
+
+#### Label filtering
+
+One can use the command line flag `--filter-label` to filter which vaultsecret custom resource to process by the operator.
+This flag can be used multiple times.
+
+Example usage:
+
+```
+--filter-label=mylabel=myvalue
+```
+
 ## Custom resource
 
 Here is an example (`deploy/crds/maupu_v1beta1_vaultsecret_cr.yaml`) :
@@ -40,7 +60,6 @@ metadata:
   namespace: nma
 spec:
   secretName: vault-secret-test
-  # targetNamespace: nma
   secrets:
     - secretKey: username
       path: secret/test
@@ -55,6 +74,11 @@ spec:
         role: myrole
         cluster: kubernetes
 ```
+
+A corresponding secret would be created in the same namespace as the *VaultSecret* custom resource.
+This secret would contain two keys filled with vault content:
+- `username`
+- `password`
 
 ## Vault configuration
 

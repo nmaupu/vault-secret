@@ -7,10 +7,9 @@ import (
 // VaultSecretSpec defines the desired state of VaultSecret
 // +k8s:openapi-gen=true
 type VaultSecretSpec struct {
-	Config          VaultSecretSpecConfig   `json:"config,required"`
-	Secrets         []VaultSecretSpecSecret `json:"secrets,required"`
-	SecretName      string                  `json:"secretName,omitempty"`
-	TargetNamespace string                  `json:"targetNamespace,omitempty"`
+	Config     VaultSecretSpecConfig   `json:"config,required"`
+	Secrets    []VaultSecretSpecSecret `json:"secrets,required"`
+	SecretName string                  `json:"secretName,omitempty"`
 }
 
 // Configuration part of a vault-secret object

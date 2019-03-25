@@ -2,13 +2,16 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/nmaupu/vault-secret/pkg/apis"
 	"github.com/nmaupu/vault-secret/pkg/controller"
+	"github.com/nmaupu/vault-secret/pkg/controller/vaultsecret"
 
 	appVersion "github.com/nmaupu/vault-secret/version"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -46,6 +49,9 @@ func main() {
 	// controller-runtime)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 
+	// Filter events on a labels
+	var labels *[]string = pflag.StringArray("filter-label", []string{}, "Process only Vaultsecret custom resources containing the given label")
+
 	pflag.Parse()
 
 	// Use a zap logr.Logger implementation. If none of the zap
@@ -59,6 +65,19 @@ func main() {
 	logf.SetLogger(zap.Logger())
 
 	printVersion()
+
+	// Labels filtering
+	for _, v := range *labels {
+		toks := strings.Split(v, "=")
+		if len(toks) != 2 {
+			log.Error(errors.New("Incorrect label filter"), v)
+		} else {
+			key := toks[0]
+			val := toks[1]
+			log.Info(fmt.Sprintf("Adding label filter: %s = %s", key, val))
+			vaultsecret.AddLabelFilter(key, val)
+		}
+	}
 
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {

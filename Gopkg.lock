@@ -411,6 +411,21 @@
   version = "1.0.1"
 
 [[projects]]
+  digest = "1:20acba55a624ed7fa2154573073eccaa2040920c761e3fffbf7b2ca106abe1b6"
+  name = "github.com/nmaupu/vault-secret"
+  packages = [
+    "pkg/apis",
+    "pkg/apis/maupu/v1beta1",
+    "pkg/controller",
+    "pkg/controller/vaultsecret",
+    "pkg/vault",
+    "version",
+  ]
+  pruneopts = "NT"
+  revision = "bffa9303c84dd71260b3196a68f7b0e88113add6"
+  version = "0.0.7"
+
+[[projects]]
   branch = "master"
   digest = "1:42bb8c5af37ed30491ebf84247feb37a56f1fdb4eef4b53e12b4f16b0872866e"
   name = "github.com/operator-framework/operator-sdk"
@@ -1032,7 +1047,14 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/go-openapi/spec",
     "github.com/hashicorp/vault/api",
+    "github.com/nmaupu/vault-secret/pkg/apis",
+    "github.com/nmaupu/vault-secret/pkg/apis/maupu/v1beta1",
+    "github.com/nmaupu/vault-secret/pkg/controller",
+    "github.com/nmaupu/vault-secret/pkg/controller/vaultsecret",
+    "github.com/nmaupu/vault-secret/pkg/vault",
+    "github.com/nmaupu/vault-secret/version",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/pkg/leader",
     "github.com/operator-framework/operator-sdk/pkg/log/zap",
@@ -1054,12 +1076,15 @@
     "k8s.io/code-generator/cmd/lister-gen",
     "k8s.io/gengo/args",
     "k8s.io/kube-openapi/cmd/openapi-gen",
+    "k8s.io/kube-openapi/pkg/common",
     "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/client/config",
     "sigs.k8s.io/controller-runtime/pkg/controller",
     "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil",
+    "sigs.k8s.io/controller-runtime/pkg/event",
     "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",
+    "sigs.k8s.io/controller-runtime/pkg/predicate",
     "sigs.k8s.io/controller-runtime/pkg/reconcile",
     "sigs.k8s.io/controller-runtime/pkg/runtime/log",
     "sigs.k8s.io/controller-runtime/pkg/runtime/scheme",

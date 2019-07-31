@@ -14,9 +14,10 @@ type VaultSecretSpec struct {
 
 // Configuration part of a vault-secret object
 type VaultSecretSpecConfig struct {
-	Addr     string                    `json:"addr,required"`
-	Insecure bool                      `json:"insecure,omitempty"`
-	Auth     VaultSecretSpecConfigAuth `json:"auth,required"`
+	Addr      string                    `json:"addr,required"`
+	Namespace string                    `json:"namespace,omitempty"`
+	Insecure  bool                      `json:"insecure,omitempty"`
+	Auth      VaultSecretSpecConfigAuth `json:"auth,required"`
 }
 
 // Mean of authentication for Vault

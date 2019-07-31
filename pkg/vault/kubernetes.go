@@ -41,6 +41,11 @@ func (k KubernetesProvider) Login(c *VaultConfig) (*vapi.Client, error) {
 		return nil, err
 	}
 
+	vaultNamespace := c.Namespace
+	if vaultNamespace != "" {
+		vclient.SetNamespace(vaultNamespace)
+	}
+
 	jwtData, err := ioutil.ReadFile(KubernetesTokenFile)
 	if err != nil {
 		return nil, err

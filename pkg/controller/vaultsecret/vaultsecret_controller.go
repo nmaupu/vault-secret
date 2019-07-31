@@ -195,6 +195,7 @@ func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 
 	// Processing vault login
 	vaultConfig := nmvault.NewVaultConfig(cr.Spec.Config.Addr)
+	vaultConfig.Namespace = cr.Spec.Config.Namespace
 	vaultConfig.Insecure = cr.Spec.Config.Insecure
 	vclient, err := authProvider.Login(vaultConfig)
 	if err != nil {

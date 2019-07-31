@@ -33,6 +33,11 @@ func (t TokenProvider) Login(c *VaultConfig) (*vapi.Client, error) {
 		return nil, err
 	}
 
+	vaultNamespace := c.Namespace
+	if vaultNamespace != "" {
+		vclient.SetNamespace(vaultNamespace)
+	}
+
 	vclient.SetToken(t.Token)
 	return vclient, nil
 }

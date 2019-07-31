@@ -10,14 +10,16 @@ var (
 )
 
 type VaultConfig struct {
-	Address  string
-	Insecure bool
+	Address   string
+	Namespace string
+	Insecure  bool
 }
 
 func NewVaultConfig(address string) *VaultConfig {
 	return &VaultConfig{
-		Address:  address,
-		Insecure: false,
+		Address:   address,
+		Namespace: "",
+		Insecure:  false,
 	}
 }
 

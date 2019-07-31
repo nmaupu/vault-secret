@@ -36,6 +36,11 @@ func (a AppRoleProvider) Login(c *VaultConfig) (*vapi.Client, error) {
 		return nil, err
 	}
 
+	vaultNamespace := c.Namespace
+	if vaultNamespace != "" {
+		vclient.SetNamespace(vaultNamespace)
+	}
+
 	data := map[string]interface{}{
 		"role_id":   a.RoleID,
 		"secret_id": a.SecretID,

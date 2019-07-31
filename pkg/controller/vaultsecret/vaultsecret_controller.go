@@ -214,7 +214,7 @@ func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 		status := true
 
 		// Vault read
-		sec, err := nmvault.Read(vclient, s.Path)
+		sec, err := nmvault.Read(vclient, s.KvPath, s.Path)
 
 		if err != nil {
 			hasError = true

@@ -13,16 +13,11 @@ const (
 )
 
 // Read a path from vault taking account KV version 1 and 2 automatically
-func Read(vc *vapi.Client, p string) (map[string]interface{}, error) {
-	pathElts := strings.Split(p, "/")
-	kvPath := pathElts[0]
-	pathLessMount := ""
-	if len(pathElts) > 1 {
-		pathLessMount = path.Join(pathElts[1:]...)
-	}
+func Read(vc *vapi.Client, kvPath string, secretPath string) (map[string]interface{}, error) {
+	p := path.Join(kvPath, secretPath)
 
-	pathV1 := path.Join(kvPath, pathLessMount)
-	pathV2 := path.Join(kvPath, "data", pathLessMount)
+	pathV1 := path.Join(kvPath, secretPath)
+	pathV2 := path.Join(kvPath, "data", secretPath)
 
 	var data map[string]interface{}
 

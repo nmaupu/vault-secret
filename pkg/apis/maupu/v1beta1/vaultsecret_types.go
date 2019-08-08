@@ -38,6 +38,8 @@ type VaultSecretSpecConfigAuth struct {
 type VaultSecretSpecSecret struct {
 	// Key name in the secret to create
 	SecretKey string `json:"secretKey,required"`
+	// Path of the key-value storage
+	KvPath string `json:"kvPath,required"`
 	// Path of the vault secret
 	Path string `json:"path,required"`
 	// Field to retrieve from the path

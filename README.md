@@ -62,10 +62,12 @@ spec:
   secretName: vault-secret-test
   secrets:
     - secretKey: username
-      path: secret/test
+      kvPath: secrets/kv
+      path: test
       field: username
     - secretKey: password
-      path: secret/test
+      kvPath: secrets/kv
+      path: test
       field: password
   config:
     addr: https://vault.example.com

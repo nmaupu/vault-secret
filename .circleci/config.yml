@@ -6,7 +6,7 @@ executors:
       - ORG_NAME: nmaupu
       - PROJECT_NAME: vault-secret
     docker:
-      - image: circleci/golang:1.10.0
+      - image: circleci/golang:1.12
     working_directory: /go/src/github.com/nmaupu/vault-secret
 
 jobs:

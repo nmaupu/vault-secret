@@ -20,6 +20,8 @@ import (
 	"github.com/operator-framework/operator-sdk/pkg/metrics"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
+	"k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -126,7 +128,11 @@ func main() {
 	}
 
 	// Create Service object to expose the metrics port.
-	_, err = metrics.ExposeMetricsPort(ctx, metricsPort)
+	servicePorts := []v1.ServicePort{
+		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
+	}
+
+	_, err = metrics.CreateMetricsService(ctx, cfg, servicePorts)
 	if err != nil {
 		log.Info(err.Error())
 	}

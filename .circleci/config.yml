@@ -38,9 +38,12 @@ jobs:
       - run:
           name: Operator-sdk installation
           command: |
-              git clone https://github.com/operator-framework/operator-sdk $GOPATH/src/github.com/operator-framework/operator-sdk
+              mkdir -p $GOPATH/src/github.com/operator-framework
+              cd $GOPATH/src/github.com/operator-framework
+              git clone https://github.com/operator-framework/operator-sdk.git
               cd $GOPATH/src/github.com/operator-framework/operator-sdk
-              make dep
+              git checkout master
+              make tidy
               make install
       - persist_to_workspace:
           root: /go

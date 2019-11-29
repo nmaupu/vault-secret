@@ -87,6 +87,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		IsController: true,
 		OwnerType:    &maupuv1beta1.VaultSecret{},
 	}, pred)
+
 	if err != nil {
 		return err
 	}

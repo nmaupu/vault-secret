@@ -1,9 +1,4 @@
-FROM alpine:3.8
-
-RUN apk update && \
-    apk add ca-certificates curl jq bash && \
-    apk upgrade --available && \
-    rm -rf /var/cache/apk/*
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
 ENV OPERATOR=/usr/local/bin/vault-secret \
     USER_UID=1001 \

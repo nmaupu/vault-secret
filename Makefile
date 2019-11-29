@@ -4,7 +4,6 @@ IMAGE_NAME = nmaupu/vault-secret:$(CIRCLE_TAG)
 
 .PHONY: all
 all:
-	$(MAKE) dep
 	$(MAKE) build
 	$(MAKE) push
 
@@ -14,19 +13,8 @@ clean:
 	rm -f pkg/apis/maupu/v1beta1/zz_*
 	rm -rf release/
 
-vendor:
-	dep ensure -v
-
-.PHONY: dep
-dep: vendor
-	true
-
-.PHONY: dep-update
-dep-update:
-	dep ensure -update -v
-
 .PHONY: build
-build: vendor
+build:
 	operator-sdk generate k8s
 	operator-sdk build $(IMAGE_NAME)
 
@@ -57,7 +45,6 @@ test-manifest:
 	mkdir -p release/manifests
 	cp deploy/operator.yaml release/manifests
 	sed -i -e "s/\(nmaupu.vault-secret\):latest$$/\1:$(CIRCLE_TAG)/g" release/manifests/operator.yaml
-
 
 .PHONY: CI-process-release
 CI-process-release:

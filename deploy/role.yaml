@@ -3,13 +3,13 @@ kind: Role
 metadata:
   creationTimestamp: null
   name: vault-secret-role
-  namespace: nma
 rules:
 - apiGroups:
   - ""
   resources:
   - pods
   - services
+  - services/finalizers
   - endpoints
   - persistentvolumeclaims
   - events
@@ -50,6 +50,5 @@ rules:
   - maupu.org
   resources:
   - '*'
-  - vaultsecrets
   verbs:
   - '*'

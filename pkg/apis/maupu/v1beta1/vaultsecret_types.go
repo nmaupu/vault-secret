@@ -49,8 +49,6 @@ type VaultSecretSpecSecret struct {
 
 // Status field regarding last custom resource process
 // +k8s:openapi-gen=true
-// +kubebuilder:resource:path=vaultsecrets,scope=Namespaced
-// +kubebuilder:subresource:status
 type VaultSecretStatus struct {
 	// +listType=set
 	Entries []VaultSecretStatusEntry `json:"entries,omitempty"`
@@ -68,6 +66,8 @@ type VaultSecretStatusEntry struct {
 
 // VaultSecret is the Schema for the vaultsecrets API
 // +k8s:openapi-gen=true
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:path=vaultsecrets,scope=Namespaced
 type VaultSecret struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

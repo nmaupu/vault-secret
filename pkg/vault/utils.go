@@ -22,12 +22,9 @@ func Read(vc *vapi.Client, kvPath string, secretPath string) (map[string]interfa
 	var data map[string]interface{}
 
 	// Trying V1 type URL
+	// Might fail (err!=nil with a 403) if policy is for a v2 backend (including data in the path)
 	sec, err := read(vc, pathV1)
-	if err != nil {
-		return nil, err
-	}
-
-	if contains(sec.Warnings, VaultKVWarning) {
+	if err != nil || (sec != nil && contains(sec.Warnings, VaultKVWarning)) {
 		// Need a V2 KV type read
 		sec, err := read(vc, pathV2)
 		if err != nil {
@@ -37,8 +34,10 @@ func Read(vc *vapi.Client, kvPath string, secretPath string) (map[string]interfa
 		if sec != nil && sec.Data != nil && sec.Data["data"] != nil {
 			data = sec.Data["data"].(map[string]interface{})
 		}
-	} else {
+	} else if sec != nil {
 		data = sec.Data
+	} else {
+		data = nil
 	}
 
 	if data == nil {

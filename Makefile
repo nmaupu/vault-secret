@@ -35,8 +35,8 @@ CI-release-prepare:
 	mkdir -p release/manifests/crds
 	cp -a deploy/*.yaml release/manifests
 	sed -i -e "s/\(nmaupu.vault-secret\):latest$$/\1:$(CIRCLE_TAG)/g" release/manifests/operator.yaml
-	cp -a deploy/crds/maupu_v1beta1_vaultsecret_crd.yaml release/manifests/crds
-	cp -a deploy/crds/maupu_v1beta1_vaultsecret_cr.yaml release/manifests/crds/vault-secret-cr-example.yaml
+	cp -a deploy/crds/maupu.org_vaultsecrets_crd.yaml release/manifests/crds
+	cp -a deploy/crds/maupu.org_v1beta1_vaultsecrets_cr.yaml release/manifests/crds/vault-secret-cr-example.yaml
 	tar cfz release/vault-secret-manifests-$(CIRCLE_TAG).tar.gz -C release manifests
 	rm -rf release/manifests/
 	sed -i -e "s/latest/$(CIRCLE_TAG)/g" version/version.go

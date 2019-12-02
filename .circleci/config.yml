@@ -2,7 +2,6 @@ version: 2.1
 executors:
   golang-executor:
     environment:
-      - DEP_VERSION: 0.5.1
       - ORG_NAME: nmaupu
       - PROJECT_NAME: vault-secret
     docker:
@@ -16,23 +15,18 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - vendor-{{ .Branch }}-{{ .Revision }}-{{ checksum "Gopkg.lock" }}
+            - vendor-{{ .Branch }}-{{ .Revision }}-{{ checksum "go.sum" }}
             - vendor-{{ .Branch }}-{{ .Revision }}-
       - run:
-          name: Installing dep tool
-          command: |
-            curl -L -s https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 -o $GOPATH/bin/dep
-            chmod +x $GOPATH/bin/dep
-      - run:
-          name: Golang dep installation
+          name: Golang vendor directory
           command: |
             if [ ! -d $GOPATH/src/github.com/$ORG_NAME/$PROJECT_NAME/vendor ]; then
               cd $GOPATH/src/github.com/$ORG_NAME/$PROJECT_NAME && \
-              make dep
+              make vendor
             fi
       - save_cache:
           name: Saving cache for project vendor directory
-          key: vendor-{{ .Branch }}-{{ .Revision }}-{{ checksum "Gopkg.lock" }}
+          key: vendor-{{ .Branch }}-{{ .Revision }}-{{ checksum "go.sum" }}
           paths:
             - vendor
       - run:
@@ -58,7 +52,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - vendor-{{ .Branch }}-{{ .Revision }}-{{ checksum "Gopkg.lock" }}
+            - vendor-{{ .Branch }}-{{ .Revision }}-{{ checksum "go.sum" }}
             - vendor-{{ .Branch }}-{{ .Revision }}-
       - restore_cache:
           keys:

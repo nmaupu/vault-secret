@@ -7,14 +7,19 @@ all:
 	$(MAKE) build
 	$(MAKE) push
 
+vendor:
+	go mod tidy
+	go mod vendor
+
 .PHONY: clean
 clean:
 	rm -rf vendor/
+	rm -rf build/_output build/_test
 	rm -f pkg/apis/maupu/v1beta1/zz_*
 	rm -rf release/
 
 .PHONY: build
-build:
+build: vendor
 	operator-sdk generate k8s
 	operator-sdk build $(IMAGE_NAME)
 

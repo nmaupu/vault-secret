@@ -7,7 +7,8 @@ import (
 // VaultSecretSpec defines the desired state of VaultSecret
 // +k8s:openapi-gen=true
 type VaultSecretSpec struct {
-	Config     VaultSecretSpecConfig   `json:"config,required"`
+	Config VaultSecretSpecConfig `json:"config,required"`
+	// +listType=set
 	Secrets    []VaultSecretSpecSecret `json:"secrets,required"`
 	SecretName string                  `json:"secretName,omitempty"`
 }
@@ -48,9 +49,10 @@ type VaultSecretSpecSecret struct {
 
 // Status field regarding last custom resource process
 // +k8s:openapi-gen=true
-// +kubebuilder:subresource:status
 // +kubebuilder:resource:path=vaultsecrets,scope=Namespaced
+// +kubebuilder:subresource:status
 type VaultSecretStatus struct {
+	// +listType=set
 	Entries []VaultSecretStatusEntry `json:"entries,omitempty"`
 }
 

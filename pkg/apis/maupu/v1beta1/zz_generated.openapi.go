@@ -67,8 +67,41 @@ func schema_pkg_apis_maupu_v1beta1_VaultSecretSpec(ref common.ReferenceCallback)
 			SchemaProps: spec.SchemaProps{
 				Description: "VaultSecretSpec defines the desired state of VaultSecret",
 				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"config": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/nmaupu/vault-secret/pkg/apis/maupu/v1beta1.VaultSecretSpecConfig"),
+						},
+					},
+					"secrets": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/nmaupu/vault-secret/pkg/apis/maupu/v1beta1.VaultSecretSpecSecret"),
+									},
+								},
+							},
+						},
+					},
+					"secretName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"config", "secrets"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/nmaupu/vault-secret/pkg/apis/maupu/v1beta1.VaultSecretSpecConfig", "github.com/nmaupu/vault-secret/pkg/apis/maupu/v1beta1.VaultSecretSpecSecret"},
 	}
 }
 
@@ -76,9 +109,30 @@ func schema_pkg_apis_maupu_v1beta1_VaultSecretStatus(ref common.ReferenceCallbac
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "VaultSecretStatus defines the observed state of VaultSecret",
+				Description: "Status field regarding last custom resource process",
 				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"entries": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/nmaupu/vault-secret/pkg/apis/maupu/v1beta1.VaultSecretStatusEntry"),
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
+		Dependencies: []string{
+			"github.com/nmaupu/vault-secret/pkg/apis/maupu/v1beta1.VaultSecretStatusEntry"},
 	}
 }

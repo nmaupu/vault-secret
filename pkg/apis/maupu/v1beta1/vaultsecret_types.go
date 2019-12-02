@@ -23,16 +23,22 @@ type VaultSecretSpecConfig struct {
 
 // Mean of authentication for Vault
 type VaultSecretSpecConfigAuth struct {
-	Token      string `json:"token,omitempty"`
-	Kubernetes struct {
-		Role    string `json:"role,required"`
-		Cluster string `json:"cluster,required"`
-	} `json:"kubernetes,omitempty"`
-	AppRole struct {
-		Name     string `json:"name,omitempty"`
-		RoleID   string `json:"roleId,required"`
-		SecretID string `json:"secretId,required"`
-	} `json:"approle,omitempty"`
+	Token      string             `json:"token,omitempty"`
+	Kubernetes KubernetesAuthType `json:"kubernetes,omitempty"`
+	AppRole    AppRoleAuthType    `json:"approle,omitempty"`
+}
+
+// Kubernetes authentication type
+type KubernetesAuthType struct {
+	Role    string `json:"role,required"`
+	Cluster string `json:"cluster,required"`
+}
+
+// AppRole authentication type
+type AppRoleAuthType struct {
+	Name     string `json:"name,omitempty"`
+	RoleID   string `json:"roleId,required"`
+	SecretID string `json:"secretId,required"`
 }
 
 // Define secrets to create from Vault

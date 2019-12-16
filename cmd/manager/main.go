@@ -29,10 +29,15 @@ import (
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+)
+
+const (
+	WatchMultiNamespacesEnvVar = "WATCH_MULTINAMESPACES"
 )
 
 // Change below variables to serve metrics on different host or port.
@@ -93,10 +98,21 @@ func main() {
 
 	printVersion()
 
+	// Get namespace to watch from WATCH_NAMESPACE environment variable
+	// If set, use it. Otherwise, try WATCH_MULTINAMESPACES environment variable
+	// If not set, use cluster wide configuration
 	namespace, err := k8sutil.GetWatchNamespace()
 	if err != nil {
-		log.Error(err, "Failed to get watch namespace")
-		os.Exit(1)
+		// WATCH_NAMESPACE not found
+		log.Info("WATCH_NAMESPACE env var not set")
+	}
+	multiNamespaces, err := GetWatchMultiNamespaces()
+	if err != nil {
+		// WATCH_MULTINAMESPACES not found
+		log.Info(fmt.Sprintf("%s not set", WatchMultiNamespacesEnvVar))
+	}
+	if namespace == "" && len(multiNamespaces) == 0 {
+		log.Info(fmt.Sprintf("WATCH_NAMESPACE and %s are not set, operator is cluster wide", WatchMultiNamespacesEnvVar))
 	}
 
 	// Get a config to talk to the apiserver
@@ -115,11 +131,22 @@ func main() {
 	}
 
 	// Create a new Cmd to provide shared dependencies and start components
-	mgr, err := manager.New(cfg, manager.Options{
+	// Create manager options struct depending on namespace(s) possibilities
+	mgrOptions := manager.Options{
 		Namespace:          namespace,
 		MapperProvider:     restmapper.NewDynamicRESTMapper,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
-	})
+	}
+	// WATCH_MULTINAMESPACES is taking over WATCH_NAMESPACE
+	if len(multiNamespaces) > 0 {
+		log.Info(fmt.Sprintf("Using WATCH_MULTINAMESPACES value = %+v", multiNamespaces))
+		mgrOptions.NewCache = cache.MultiNamespacedCacheBuilder(multiNamespaces)
+		mgrOptions.Namespace = ""
+	} else {
+		log.Info(fmt.Sprintf("Using WATCH_NAMESPACE value = \"%s\"", namespace))
+	}
+	// Creating the manager
+	mgr, err := manager.New(cfg, mgrOptions)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -198,4 +225,17 @@ func serveCRMetrics(cfg *rest.Config) error {
 		return err
 	}
 	return nil
+}
+
+// GetWatchMultiNamespaces returns the namespaces list the operator should be watching for changes
+// Very similar to WATCH_NAMESPACE but for multiple namespaces
+func GetWatchMultiNamespaces() ([]string, error) {
+	var namespaces []string
+	ns, found := os.LookupEnv(WatchMultiNamespacesEnvVar)
+	if !found {
+		return namespaces, fmt.Errorf("%s env var is not set", WatchMultiNamespacesEnvVar)
+	}
+
+	namespaces = strings.Split(ns, ",")
+	return namespaces, nil
 }

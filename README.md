@@ -33,10 +33,11 @@ $ kubectl apply -f deploy/operator.yaml
 
 #### Env vars
 
-Operator can be configured to watch a unique namespace or can also be cluster wide. In that case, modify RBAC role and role binding to be cluster scoped.
+The *vault-secret operator* can be configured to watch a unique namespace, a set of namespaces or can also be cluster wide. In that case, modify RBAC role and role binding to be cluster scoped.
 The following environment variables are available to configure the operator:
-- `WATCH_NAMESPACE`: Namespace to watch for new CR, if not defined, the operator will be cluster scoped
-- `OPERATOR_NAME`: Name of the operator
+- `WATCH_NAMESPACE`: namespace to watch for new CR. If not defined, use `WATCH_MULTINAMESPACES` or configure a cluster wide operator.
+- `WATCH_MULTINAMESPACES`: comma separated list of namespaces to watch for new CR, if not defined, the operator will be cluster scoped except if `WATCH_NAMESPACE` is set.
+- `OPERATOR_NAME`: name of the operator.
 
 #### Label filtering
 

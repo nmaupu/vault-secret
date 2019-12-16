@@ -25,6 +25,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+           #- name: WATCH_MULTINAMESPACES
+           #  value: "default,test"
             - name: POD_NAME
               valueFrom:
                 fieldRef:

@@ -83,6 +83,31 @@ This secret would contain two keys filled with vault content:
 - `username`
 - `password`
 
+Here is another example for "dockerconfig" secrets:
+```
+apiVersion: maupu.org/v1beta1
+kind: VaultSecret
+metadata:
+  name: dockerconfig-example
+  namespace: nma
+spec:
+  secretName: dockerconfig-test
+  secretType: kubernetes.io/dockerconfigjson
+  secrets:
+    - secretKey: .dockerconfigjson
+      kvPath: secrets/dockerconfig
+      field: dockerconfigjson
+      path: /
+  config:
+    addr: https://vault.example.com
+    auth:
+      kubernetes:
+        role: myrole
+        cluster: kubernetes
+```
+
+It's possible to set the secret type in the spec with `secretType`, if it isn't specified the default value is `Opaque`.
+
 ## Vault configuration
 
 To authenticate, the operator uses the `config` section of the Custom Resource Definition. The following options are supported:

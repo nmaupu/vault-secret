@@ -1,6 +1,7 @@
 package v1beta1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -11,6 +12,7 @@ type VaultSecretSpec struct {
 	// +listType=set
 	Secrets    []VaultSecretSpecSecret `json:"secrets,required"`
 	SecretName string                  `json:"secretName,omitempty"`
+	SecretType corev1.SecretType       `json:"secretType,omitempty"`
 }
 
 // Configuration part of a vault-secret object

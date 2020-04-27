@@ -61,6 +61,8 @@ metadata:
   namespace: nma
 spec:
   secretName: vault-secret-test
+  secretLabels:
+    foo: bar
   secrets:
     - secretKey: username
       kvPath: secrets/kv
@@ -82,6 +84,8 @@ A corresponding secret would be created in the same namespace as the *VaultSecre
 This secret would contain two keys filled with vault content:
 - `username`
 - `password`
+
+It's possible to add labels to the generated secret with `secretLabels`.
 
 Here is another example for "dockerconfig" secrets:
 ```

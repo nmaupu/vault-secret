@@ -193,6 +193,10 @@ func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 		secretType = "Opaque"
 	}
 
+	for key, val := range cr.Spec.SecretLabels {
+		labels[key] = val
+	}
+
 	// Authentication provider
 	authProvider, err := cr.GetVaultAuthProvider()
 	if err != nil {

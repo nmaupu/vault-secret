@@ -10,9 +10,10 @@ import (
 type VaultSecretSpec struct {
 	Config VaultSecretSpecConfig `json:"config,required"`
 	// +listType=set
-	Secrets    []VaultSecretSpecSecret `json:"secrets,required"`
-	SecretName string                  `json:"secretName,omitempty"`
-	SecretType corev1.SecretType       `json:"secretType,omitempty"`
+	Secrets      []VaultSecretSpecSecret `json:"secrets,required"`
+	SecretName   string                  `json:"secretName,omitempty"`
+	SecretType   corev1.SecretType       `json:"secretType,omitempty"`
+	SecretLabels map[string]string       `json:"secretLabels,omitempty"`
 }
 
 // Configuration part of a vault-secret object

@@ -14,6 +14,7 @@ type VaultSecretSpec struct {
 	SecretName   string                  `json:"secretName,omitempty"`
 	SecretType   corev1.SecretType       `json:"secretType,omitempty"`
 	SecretLabels map[string]string       `json:"secretLabels,omitempty"`
+	SyncPeriod   metav1.Duration         `json:"syncPeriod,omitempty"`
 }
 
 // Configuration part of a vault-secret object

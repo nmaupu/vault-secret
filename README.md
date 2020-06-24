@@ -72,6 +72,7 @@ spec:
       kvPath: secrets/kv
       path: test
       field: password
+  syncPeriod: 1h
   config:
     addr: https://vault.example.com
     auth:
@@ -111,6 +112,8 @@ spec:
 ```
 
 It's possible to set the secret type in the spec with `secretType`, if it isn't specified the default value is `Opaque`.
+
+Secret are resynced periodically (after a maximum of 10h) but it's possible to reduce this delay with the `syncPeriod` option (`syncPeriod: 1h`).
 
 ## Vault configuration
 

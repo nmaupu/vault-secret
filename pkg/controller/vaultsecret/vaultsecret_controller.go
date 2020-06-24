@@ -169,7 +169,7 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 	}
 
 	// finally return giving err (nil if not problem occured, set to something otherwise)
-	return reconcile.Result{}, err
+	return reconcile.Result{RequeueAfter: CRInstance.Spec.SyncPeriod.Duration}, err
 }
 
 func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {

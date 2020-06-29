@@ -3,9 +3,10 @@ package vault
 import (
 	"errors"
 	"fmt"
-	vapi "github.com/hashicorp/vault/api"
 	"path"
 	"strings"
+
+	vapi "github.com/hashicorp/vault/api"
 )
 
 const (
@@ -50,7 +51,7 @@ func Read(vc *vapi.Client, kvPath string, secretPath string) (map[string]interfa
 func read(vc *vapi.Client, p string) (*vapi.Secret, error) {
 	sec, err := vc.Logical().Read(p)
 	if err != nil {
-		// An unknown error occured
+		// An unknown error occurred
 		return nil, err
 	} else if err == nil && sec == nil {
 		return nil, errors.New(fmt.Sprintf("Secret path %s not found", p))

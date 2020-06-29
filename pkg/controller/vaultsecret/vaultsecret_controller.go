@@ -4,8 +4,12 @@ import (
 	"context"
 	goerrors "errors"
 	"fmt"
+	"os"
+	"time"
+
 	maupuv1beta1 "github.com/nmaupu/vault-secret/pkg/apis/maupu/v1beta1"
 	nmvault "github.com/nmaupu/vault-secret/pkg/vault"
+	appVersion "github.com/nmaupu/vault-secret/version"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,10 +28,11 @@ import (
 )
 
 const (
-	ControllerName = "vaultsecret-controller"
+	OperatorAppName = "vaultsecret-operator"
+	TimeFormat      = "2006-01-02_15-04-05"
 )
 
-var log = logf.Log.WithName(ControllerName)
+var log = logf.Log.WithName(OperatorAppName)
 
 // Fitlering events on labels
 var LabelsFilter map[string]string
@@ -54,7 +59,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
-	c, err := controller.New(ControllerName, mgr, controller.Options{Reconciler: r})
+	c, err := controller.New(OperatorAppName, mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
 	}
@@ -130,13 +135,13 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 	// Define a new Secret object from CR specs
 	secretFromCR, err := newSecretForCR(CRInstance)
 	if err != nil && secretFromCR == nil {
-		// An error occured, requeue
+		// An error occurred, requeue
 		return reconcile.Result{}, err
 	} else if err != nil && secretFromCR != nil {
 		// Some vault path and/or fields are not found, update CR (status) and requeue
 		reqLogger.Error(err, "Some errors have been issued in the CR status information, please check")
 		if updateErr := r.client.Status().Update(context.TODO(), CRInstance); updateErr != nil {
-			reqLogger.Error(updateErr, "Error occured when updating CR status")
+			reqLogger.Error(updateErr, "Error occurred when updating CR status")
 		}
 		return reconcile.Result{}, err
 	}
@@ -165,19 +170,27 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 	// No problem creating or updating secret, updating CR info
 	reqLogger.Info("Updating CR status information")
 	if updateErr := r.client.Status().Update(context.TODO(), CRInstance); updateErr != nil {
-		reqLogger.Error(updateErr, "Error occured when updating CR status")
+		reqLogger.Error(updateErr, "Error occurred when updating CR status")
 	}
 
-	// finally return giving err (nil if not problem occured, set to something otherwise)
+	// finally return giving err (nil if not problem occurred, set to something otherwise)
 	return reconcile.Result{RequeueAfter: CRInstance.Spec.SyncPeriod.Duration}, err
 }
 
 func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
-	labels := map[string]string{
-		"crName":      cr.Name,
-		"crNamespace": cr.Namespace,
-		"controller":  ControllerName,
+	operatorName := os.Getenv("OPERATOR_NAME")
+	if operatorName == "" {
+		operatorName = OperatorAppName
 	}
+	labels := map[string]string{
+		"app.kubernetes.io/name":       OperatorAppName,
+		"app.kubernetes.io/version":    appVersion.Version,
+		"app.kubernetes.io/managed-by": operatorName,
+		"crName":                       cr.Name,
+		"crNamespace":                  cr.Namespace,
+		"lastUpdate":                   time.Now().Format(TimeFormat),
+	}
+
 	// Adding filtered labels
 	for key, val := range LabelsFilter {
 		labels[key] = val
@@ -231,7 +244,7 @@ func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 			if err != nil {
 				rootErrMessage = err.Error()
 			}
-			errMessage = "Problem occured getting secret"
+			errMessage = "Problem occurred getting secret"
 			status = false
 		} else if sec == nil || sec[s.Field] == nil || sec[s.Field] == "" {
 			hasError = true
@@ -255,7 +268,7 @@ func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 	}
 
 	// Handle return
-	// Error is returned along with secret if it occured at least once during loop
+	// Error is returned along with secret if it occurred at least once during loop
 	// In case of error, we return a half populated secret object that caller has to handle itself
 	var retErr error
 	retErr = nil

@@ -86,6 +86,8 @@ This secret would contain two keys filled with vault content:
 - `username`
 - `password`
 
+---
+
 It's possible to add labels to the generated secret with `secretLabels`.
 
 Here is another example for "dockerconfig" secrets:
@@ -113,7 +115,35 @@ spec:
 
 It's possible to set the secret type in the spec with `secretType`, if it isn't specified the default value is `Opaque`.
 
+---
+
 Secret are resynced periodically (after a maximum of 10h) but it's possible to reduce this delay with the `syncPeriod` option (`syncPeriod: 1h`).
+
+---
+
+If your Vault is using *TLS* but if its certificates are not signed by a *known authority*, one can use the config option `insecure` to skip tls verification.
+
+Do not use `TLS_SKIP_VERIFY` env variable, **it's not** being taken into account.
+
+Here is an example:
+```
+apiVersion: maupu.org/v1beta1
+kind: VaultSecret
+metadata:
+  name: example-vaultsecret-insecure
+spec:
+  secretName: vault-secret-test
+  secrets:
+    - secretKey: foo
+      kvPath: secret
+      path: foo/bar
+      field: value
+  config:
+    insecure: true
+    addr: https://localhost
+    auth:
+      ...
+```
 
 ## Vault configuration
 

@@ -66,7 +66,18 @@ func main() {
 	// Filter events on a labels
 	var labels *[]string = pflag.StringArray("filter-label", []string{}, "Process only Vaultsecret custom resources containing the given label")
 
+	pflag.Parse()
+
 	// Use a zap logr.Logger implementation. If none of the zap
+	// flags are configured (or if the zap flag set is not being
+	// used), this defaults to a production zap logger.
+	//
+	// The logger instantiated here can be changed to any logger
+	// implementing the logr.Logger interface. This logger will
+	// be propagated through the whole operator, generating
+	// uniform and structured logs.
+	logf.SetLogger(zap.Logger())
+
 	printVersion()
 
 	// Labels filtering
@@ -81,20 +92,6 @@ func main() {
 			vaultsecret.AddLabelFilter(key, val)
 		}
 	}
-
-	pflag.Parse()
-
-	// Use a zap logr.Logger implementation. If none of the zap
-	// flags are configured (or if the zap flag set is not being
-	// used), this defaults to a production zap logger.
-	//
-	// The logger instantiated here can be changed to any logger
-	// implementing the logr.Logger interface. This logger will
-	// be propagated through the whole operator, generating
-	// uniform and structured logs.
-	logf.SetLogger(zap.Logger())
-
-	printVersion()
 
 	// Get namespace to watch from WATCH_NAMESPACE environment variable
 	// If set, use it. Otherwise, try WATCH_MULTINAMESPACES environment variable

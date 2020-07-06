@@ -64,21 +64,52 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	// Generic function for create, update and delete events
+	// which verifies labels' filtering
+	predFunc := func(e interface{}) bool {
+		var objectLabels map[string]string
+
+		// Trying to determine what sort of event it is
+		// https://tour.golang.org/methods/16
+		switch e.(type) {
+		case event.CreateEvent:
+			objectLabels = e.(event.CreateEvent).Meta.GetLabels()
+		case event.UpdateEvent:
+			objectLabels = e.(event.UpdateEvent).MetaNew.GetLabels()
+		case event.DeleteEvent:
+			objectLabels = e.(event.DeleteEvent).Meta.GetLabels()
+		case event.GenericEvent:
+			objectLabels = e.(event.GenericEvent).Meta.GetLabels()
+		default: // should never happen except if a new Event type is created
+			return false
+		}
+
+		// Verifying that each labels configured are present in the target object
+		for lfk, lfv := range LabelsFilter {
+			if val, ok := objectLabels[lfk]; ok {
+				if val != lfv {
+					return false
+				}
+			} else {
+				return false
+			}
+		}
+
+		return true
+	}
 	// Create a predicate to filter incoming events on configured labels filter
 	pred := predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
-			objectLabels := e.Meta.GetLabels()
-			for lfk, lfv := range LabelsFilter {
-				if val, ok := objectLabels[lfk]; ok {
-					if val != lfv {
-						return false
-					}
-				} else {
-					return false
-				}
-			}
-
-			return true
+			return predFunc(e)
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return predFunc(e)
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return predFunc(e)
+		},
+		GenericFunc: func(e event.GenericEvent) bool {
+			return predFunc(e)
 		},
 	}
 	// Watch for changes to primary resource VaultSecret

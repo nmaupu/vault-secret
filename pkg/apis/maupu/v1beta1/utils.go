@@ -2,6 +2,7 @@ package v1beta1
 
 import (
 	"errors"
+
 	nmvault "github.com/nmaupu/vault-secret/pkg/vault"
 )
 
@@ -32,3 +33,15 @@ func (cr *VaultSecret) GetVaultAuthProvider() (nmvault.VaultAuthProvider, error)
 
 	return nil, errors.New("Cannot find a way to authenticate, please choose between Token, AppRole or Kubernetes")
 }
+
+// BySecretKey allows sorting an array of VaultSecretSpecSecret by SecretKey
+type BySecretKey []VaultSecretSpecSecret
+
+// Len returns the len of a BySecretKey object
+func (a BySecretKey) Len() int { return len(a) }
+
+// Swap swaps two elements of a BySecretKey object
+func (a BySecretKey) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+
+// Less checks if a given SecretKey object is lexicographically inferior to another SecretKey object
+func (a BySecretKey) Less(i, j int) bool { return a[i].SecretKey < a[j].SecretKey }

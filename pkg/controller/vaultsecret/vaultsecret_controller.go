@@ -5,6 +5,7 @@ import (
 	goerrors "errors"
 	"fmt"
 	"os"
+	"sort"
 	"time"
 
 	maupuv1beta1 "github.com/nmaupu/vault-secret/pkg/apis/maupu/v1beta1"
@@ -28,15 +29,18 @@ import (
 )
 
 const (
+	// OperatorAppName is the name of the operator
 	OperatorAppName = "vaultsecret-operator"
-	TimeFormat      = "2006-01-02_15-04-05"
+	// TimeFormat is the time format to indicate last updated field
+	TimeFormat = "2006-01-02_15-04-05"
 )
 
 var log = logf.Log.WithName(OperatorAppName)
 
-// Fitlering events on labels
+// LabelsFilter Fitlers events on labels
 var LabelsFilter map[string]string
 
+// AddLabelFilter adds a label for filtering events
 func AddLabelFilter(key, value string) {
 	if LabelsFilter == nil {
 		LabelsFilter = make(map[string]string)
@@ -123,7 +127,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		IsController: true,
 		OwnerType:    &maupuv1beta1.VaultSecret{},
 	}, pred)
-
 	if err != nil {
 		return err
 	}
@@ -159,6 +162,8 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 			// Return and don't requeue
 			return reconcile.Result{}, nil
 		}
+
+		reqLogger.Info(fmt.Sprintf("Error reading the vaultsecret object, requeuing, err=%v", err))
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
@@ -167,12 +172,14 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 	secretFromCR, err := newSecretForCR(CRInstance)
 	if err != nil && secretFromCR == nil {
 		// An error occurred, requeue
+		reqLogger.Error(err, "An error occurred when creating secret from CR, requeuing.")
 		return reconcile.Result{}, err
 	} else if err != nil && secretFromCR != nil {
 		// Some vault path and/or fields are not found, update CR (status) and requeue
-		reqLogger.Error(err, "Some errors have been issued in the CR status information, please check")
 		if updateErr := r.client.Status().Update(context.TODO(), CRInstance); updateErr != nil {
-			reqLogger.Error(updateErr, "Error occurred when updating CR status")
+			reqLogger.Error(updateErr, fmt.Sprintf("Some errors occurred but CR cannot be updated, requeuing, original error=%v", err))
+		} else {
+			reqLogger.Error(err, "Some errors have been issued in the CR status information, please check, requeuing")
 		}
 		return reconcile.Result{}, err
 	}
@@ -181,6 +188,7 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 
 	// Set VaultSecret CRInstance as the owner and controller
 	if err = controllerutil.SetControllerReference(CRInstance, secretFromCR, r.scheme); err != nil {
+		reqLogger.Error(err, "An error occurred when setting controller reference, requeuing")
 		return reconcile.Result{}, err
 	}
 
@@ -199,10 +207,10 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 	}
 
 	// No problem creating or updating secret, updating CR info
-	reqLogger.Info("Updating CR status information")
+	/*reqLogger.Info("Updating CR status information")
 	if updateErr := r.client.Status().Update(context.TODO(), CRInstance); updateErr != nil {
-		reqLogger.Error(updateErr, "Error occurred when updating CR status")
-	}
+		reqLogger.Error(updateErr, "An error occurred when updating CR status")
+	}*/
 
 	// finally return giving err (nil if not problem occurred, set to something otherwise)
 	return reconcile.Result{RequeueAfter: CRInstance.Spec.SyncPeriod.Duration}, err
@@ -259,10 +267,16 @@ func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 	// Init
 	hasError := false
 	secrets := map[string][]byte{}
+
 	// Clear status slice
 	cr.Status.Entries = nil
+
+	// Sort by secret keys to avoid updating the resource if order changes
+	specSecrets := cr.Spec.Secrets
+	sort.Sort(maupuv1beta1.BySecretKey(specSecrets))
+
 	// Creating secret data from CR
-	for _, s := range cr.Spec.Secrets {
+	for _, s := range specSecrets {
 		errMessage := ""
 		rootErrMessage := ""
 		status := true

@@ -17,7 +17,7 @@ type VaultSecretSpec struct {
 	SyncPeriod   metav1.Duration         `json:"syncPeriod,omitempty"`
 }
 
-// Configuration part of a vault-secret object
+// VaultSecretSpecConfig Configuration part of a vault-secret object
 type VaultSecretSpecConfig struct {
 	Addr      string                    `json:"addr,required"`
 	Namespace string                    `json:"namespace,omitempty"`
@@ -25,27 +25,27 @@ type VaultSecretSpecConfig struct {
 	Auth      VaultSecretSpecConfigAuth `json:"auth,required"`
 }
 
-// Mean of authentication for Vault
+// VaultSecretSpecConfigAuth Mean of authentication for Vault
 type VaultSecretSpecConfigAuth struct {
 	Token      string             `json:"token,omitempty"`
 	Kubernetes KubernetesAuthType `json:"kubernetes,omitempty"`
 	AppRole    AppRoleAuthType    `json:"approle,omitempty"`
 }
 
-// Kubernetes authentication type
+// KubernetesAuthType Kubernetes authentication type
 type KubernetesAuthType struct {
 	Role    string `json:"role,required"`
 	Cluster string `json:"cluster,required"`
 }
 
-// AppRole authentication type
+// AppRoleAuthType AppRole authentication type
 type AppRoleAuthType struct {
 	Name     string `json:"name,omitempty"`
 	RoleID   string `json:"roleId,required"`
 	SecretID string `json:"secretId,required"`
 }
 
-// Define secrets to create from Vault
+// VaultSecretSpecSecret Defines secrets to create from Vault
 type VaultSecretSpecSecret struct {
 	// Key name in the secret to create
 	SecretKey string `json:"secretKey,required"`
@@ -55,16 +55,18 @@ type VaultSecretSpecSecret struct {
 	Path string `json:"path,required"`
 	// Field to retrieve from the path
 	Field string `json:"field,required"`
+	// KvVersion is the version of the KV backend, if unspecified, try to automatically determine it
+	KvVersion int `json:"kvVersion,omitempty"`
 }
 
-// Status field regarding last custom resource process
+// VaultSecretStatus Status field regarding last custom resource process
 // +k8s:openapi-gen=true
 type VaultSecretStatus struct {
 	// +listType=set
 	Entries []VaultSecretStatusEntry `json:"entries,omitempty"`
 }
 
-// Entry for the status field
+// VaultSecretStatusEntry Entry for the status field
 type VaultSecretStatusEntry struct {
 	Secret    VaultSecretSpecSecret `json:"secret,required"`
 	Status    bool                  `json:"status,required"`

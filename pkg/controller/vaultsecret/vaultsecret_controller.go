@@ -2,10 +2,10 @@ package vaultsecret
 
 import (
 	"context"
-	goerrors "errors"
 	"fmt"
 	"os"
 	"sort"
+	"sync"
 	"time"
 
 	maupuv1beta1 "github.com/nmaupu/vault-secret/pkg/apis/maupu/v1beta1"
@@ -33,11 +33,20 @@ const (
 	OperatorAppName = "vaultsecret-operator"
 	// TimeFormat is the time format to indicate last updated field
 	TimeFormat = "2006-01-02_15-04-05"
+	// MinTimeMsBetweenSecretUpdate avoid a secret to be updated too often
+	MinTimeMsBetweenSecretUpdate = time.Millisecond * 500
 )
 
-var log = logf.Log.WithName(OperatorAppName)
+var (
+	log = logf.Log.WithName(OperatorAppName)
 
-// LabelsFilter Fitlers events on labels
+	// secretsLastUpdateTime store last updated time of a secret to avoid reconciling too often
+	// the same secret if it changes very fast (like with database KV backend or OTP)
+	secretsLastUpdateTime      = make(map[string]time.Time)
+	secretsLastUpdateTimeMutex sync.Mutex
+)
+
+// LabelsFilter filters events on labels
 var LabelsFilter map[string]string
 
 // AddLabelFilter adds a label for filtering events
@@ -71,23 +80,29 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Generic function for create, update and delete events
 	// which verifies labels' filtering
 	predFunc := func(e interface{}) bool {
+		reqLogger := log.WithValues("func", "predFunc")
 		var objectLabels map[string]string
 
-		// Trying to determine what sort of event it is
+		// Trying to determine what sort of event we have
 		// https://tour.golang.org/methods/16
 		switch e.(type) {
 		case event.CreateEvent:
+			reqLogger.Info("Create event")
 			objectLabels = e.(event.CreateEvent).Meta.GetLabels()
 		case event.UpdateEvent:
+			reqLogger.Info("Update event")
 			objectLabels = e.(event.UpdateEvent).MetaNew.GetLabels()
 		case event.DeleteEvent:
+			reqLogger.Info("Delete event")
 			objectLabels = e.(event.DeleteEvent).Meta.GetLabels()
 		case event.GenericEvent:
+			reqLogger.Info("Generic event")
 			objectLabels = e.(event.GenericEvent).Meta.GetLabels()
 		default: // should never happen except if a new Event type is created
 			return false
 		}
 
+		// If labels match, we process the event, otherwise, simply ignore it
 		// Verifying that each labels configured are present in the target object
 		for lfk, lfv := range LabelsFilter {
 			if val, ok := objectLabels[lfk]; ok {
@@ -127,6 +142,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		IsController: true,
 		OwnerType:    &maupuv1beta1.VaultSecret{},
 	}, pred)
+
 	if err != nil {
 		return err
 	}
@@ -160,6 +176,7 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
+			reqLogger.Info("IsNotFound error when retrieving the VaultSecret object")
 			return reconcile.Result{}, nil
 		}
 
@@ -168,55 +185,68 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 		return reconcile.Result{}, err
 	}
 
-	// Define a new Secret object from CR specs
-	secretFromCR, err := newSecretForCR(CRInstance)
-	if err != nil && secretFromCR == nil {
-		// An error occurred, requeue
-		reqLogger.Error(err, "An error occurred when creating secret from CR, requeuing.")
-		return reconcile.Result{}, err
-	} else if err != nil && secretFromCR != nil {
-		// Some vault path and/or fields are not found, update CR (status) and requeue
-		if updateErr := r.client.Status().Update(context.TODO(), CRInstance); updateErr != nil {
-			reqLogger.Error(updateErr, fmt.Sprintf("Some errors occurred but CR cannot be updated, requeuing, original error=%v", err))
-		} else {
-			reqLogger.Error(err, "Some errors have been issued in the CR status information, please check, requeuing")
+	// Only updating stuff if two updates are not too close from each other
+	// See secretsLastUpdateTime and MinTimeMsBetweenSecretUpdate variables
+	updateTimeKey := fmt.Sprintf("%s/%s", CRInstance.GetNamespace(), CRInstance.Spec.SecretName)
+	secretsLastUpdateTimeMutex.Lock()
+	defer secretsLastUpdateTimeMutex.Unlock()
+	ti := secretsLastUpdateTime[updateTimeKey] // no problem if it does not exist: it returns a default time.Time object (set to zero)
+	now := time.Now()
+	if now.Sub(ti) > MinTimeMsBetweenSecretUpdate {
+		// Define a new Secret object from CR specs
+		secretFromCR, err := newSecretForCR(CRInstance)
+		if err != nil && secretFromCR == nil {
+			// An error occurred, requeue
+			reqLogger.Error(err, "An error occurred when creating secret from CR, requeuing.")
+			return reconcile.Result{}, err
+		} else if err != nil && secretFromCR != nil {
+			// Some vault path and/or fields are not found, update CR (status) and requeue
+			if updateErr := r.client.Status().Update(context.TODO(), CRInstance); updateErr != nil {
+				reqLogger.Error(updateErr, fmt.Sprintf("Some errors occurred but CR cannot be updated, requeuing, original error=%v", err))
+			} else {
+				reqLogger.Error(err, "Some errors have been issued in the CR status information, please check, requeuing")
+			}
+			return reconcile.Result{}, err
 		}
-		return reconcile.Result{}, err
+
+		// Everything's ok
+
+		// Set VaultSecret CRInstance as the owner and controller
+		if err = controllerutil.SetControllerReference(CRInstance, secretFromCR, r.scheme); err != nil {
+			reqLogger.Error(err, "An error occurred when setting controller reference, requeuing")
+			return reconcile.Result{}, err
+		}
+
+		// Creating or updating secret resource from CR
+		// Check if this Secret already exists
+		found := &corev1.Secret{}
+		err = r.client.Get(context.TODO(), types.NamespacedName{Name: secretFromCR.Name, Namespace: secretFromCR.Namespace}, found)
+		if err != nil && errors.IsNotFound(err) {
+			// Secret does not exist, creating it
+			reqLogger.Info(fmt.Sprintf("Creating new Secret %s/%s", secretFromCR.Namespace, secretFromCR.Name))
+			err = r.client.Create(context.TODO(), secretFromCR)
+		} else {
+			// Secret already exists - updating
+			reqLogger.Info(fmt.Sprintf("Reconciling existing Secret %s/%s", found.Namespace, found.Name))
+			err = r.client.Update(context.TODO(), secretFromCR)
+		}
+
+		// No problem creating or updating secret, updating CR info
+		reqLogger.Info("Updating CR status information")
+		if updateErr := r.client.Status().Update(context.TODO(), CRInstance); updateErr != nil {
+			reqLogger.Error(updateErr, "Error occurred when updating CR status")
+		}
+
+		// Updating "update time" at the very end to take into account all potential requeue above
+		secretsLastUpdateTime[updateTimeKey] = now
 	}
 
-	// Everything's ok
-
-	// Set VaultSecret CRInstance as the owner and controller
-	if err = controllerutil.SetControllerReference(CRInstance, secretFromCR, r.scheme); err != nil {
-		reqLogger.Error(err, "An error occurred when setting controller reference, requeuing")
-		return reconcile.Result{}, err
-	}
-
-	// Creating or updating secret resource from CR
-	// Check if this Secret already exists
-	found := &corev1.Secret{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: secretFromCR.Name, Namespace: secretFromCR.Namespace}, found)
-	if err != nil && errors.IsNotFound(err) {
-		// Secret does not exist, creating it
-		reqLogger.Info(fmt.Sprintf("Creating new Secret %s/%s", secretFromCR.Namespace, secretFromCR.Name))
-		err = r.client.Create(context.TODO(), secretFromCR)
-	} else {
-		// Secret already exists - updating
-		reqLogger.Info(fmt.Sprintf("Reconciling existing Secret %s/%s", found.Namespace, found.Name))
-		err = r.client.Update(context.TODO(), secretFromCR)
-	}
-
-	// No problem creating or updating secret, updating CR info
-	/*reqLogger.Info("Updating CR status information")
-	if updateErr := r.client.Status().Update(context.TODO(), CRInstance); updateErr != nil {
-		reqLogger.Error(updateErr, "An error occurred when updating CR status")
-	}*/
-
-	// finally return giving err (nil if not problem occurred, set to something otherwise)
+	// finally returning given err (nil if no problem occurred, set to something otherwise)
 	return reconcile.Result{RequeueAfter: CRInstance.Spec.SyncPeriod.Duration}, err
 }
 
 func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
+	reqLogger := log.WithValues("func", "newSecretForCR")
 	operatorName := os.Getenv("OPERATOR_NAME")
 	if operatorName == "" {
 		operatorName = OperatorAppName
@@ -271,18 +301,39 @@ func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 	// Clear status slice
 	cr.Status.Entries = nil
 
+	// Creating secret data from CR
+	// Each secret entry in the CR will need a vault read to get filled.
+	// If the KV/path remain the same, it's useless to call the vault again
+	// as all fields are returned in the original read.
+	// As a result, we are storing temporarily vault's data and use it as a "cache" to avoid
+	// overloading the vault server.
+	// This will be GC'ed at the end of the func
+	cache := make(map[string](map[string]interface{}), 0)
+
 	// Sort by secret keys to avoid updating the resource if order changes
 	specSecrets := cr.Spec.Secrets
 	sort.Sort(maupuv1beta1.BySecretKey(specSecrets))
 
 	// Creating secret data from CR
 	for _, s := range specSecrets {
+		var err error
 		errMessage := ""
 		rootErrMessage := ""
 		status := true
 
 		// Vault read
-		sec, err := nmvault.Read(vclient, s.KvPath, s.Path)
+		var sec map[string]interface{}
+		cacheKey := fmt.Sprintf("%s/%s", s.KvPath, s.Path)
+		if cacheVal, ok := cache[cacheKey]; ok {
+			sec = cacheVal
+			err = nil
+		} else {
+			reqLogger.Info(fmt.Sprintf("Reading from vault with the following info, path=%s, kvVersion=%d", cacheKey, s.KvVersion))
+			sec, err = nmvault.Read(vclient, s.KvPath, s.Path, s.KvVersion)
+			if err != nil || sec != nil { // only cache value if there is no error or a sec returned
+				cache[cacheKey] = sec
+			}
+		}
 
 		if err != nil {
 			hasError = true
@@ -318,7 +369,7 @@ func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 	var retErr error
 	retErr = nil
 	if hasError {
-		retErr = goerrors.New(fmt.Sprintf("Secret %s cannot be created, see CR Status field for details", cr.Spec.SecretName))
+		retErr = fmt.Errorf("Secret %s cannot be created, see CR Status field for details", cr.Spec.SecretName)
 	}
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{

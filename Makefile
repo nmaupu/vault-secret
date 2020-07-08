@@ -3,23 +3,19 @@ CIRCLE_TAG ?= latest
 IMAGE_NAME = nmaupu/vault-secret:$(CIRCLE_TAG)
 
 .PHONY: all
-all:
-	$(MAKE) build
-	$(MAKE) push
+all: build push
 
-vendor:
+.PHONY: deps
+deps:
 	go mod tidy
-	go mod vendor
 
 .PHONY: clean
 clean:
-	rm -rf vendor/
 	rm -rf build/_output build/_test
-	rm -f pkg/apis/maupu/v1beta1/zz_*
 	rm -rf release/
 
 .PHONY: build
-build: vendor
+build: deps
 	operator-sdk generate k8s
 	operator-sdk build $(IMAGE_NAME)
 

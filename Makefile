@@ -1,6 +1,7 @@
 default: all
 CIRCLE_TAG ?= latest
-IMAGE_NAME = nmaupu/vault-secret:$(CIRCLE_TAG)
+DOCKER_ID ?= nmaupu
+IMAGE_NAME = $(DOCKER_ID)/vault-secret:$(CIRCLE_TAG)
 
 .PHONY: all
 all: build push

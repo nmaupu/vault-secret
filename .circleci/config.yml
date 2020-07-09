@@ -13,22 +13,6 @@ jobs:
     executor: golang-executor
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - vendor-{{ .Branch }}-{{ .Revision }}-{{ checksum "go.sum" }}
-            - vendor-{{ .Branch }}-{{ .Revision }}-
-      - run:
-          name: Golang vendor directory
-          command: |
-            if [ ! -d $GOPATH/src/github.com/$ORG_NAME/$PROJECT_NAME/vendor ]; then
-              cd $GOPATH/src/github.com/$ORG_NAME/$PROJECT_NAME && \
-              make vendor
-            fi
-      - save_cache:
-          name: Saving cache for project vendor directory
-          key: vendor-{{ .Branch }}-{{ .Revision }}-{{ checksum "go.sum" }}
-          paths:
-            - vendor
       - run:
           name: Operator-sdk installation
           command: |
@@ -50,10 +34,6 @@ jobs:
       - attach_workspace:
           at: /go
       - checkout
-      - restore_cache:
-          keys:
-            - vendor-{{ .Branch }}-{{ .Revision }}-{{ checksum "go.sum" }}
-            - vendor-{{ .Branch }}-{{ .Revision }}-
       - restore_cache:
           keys:
             - release-{{ .Revision }}-{{ .Environment.CIRCLE_TAG }}

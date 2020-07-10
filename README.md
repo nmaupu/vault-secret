@@ -7,6 +7,11 @@
 
 **Solution:** Use vault-secret custom resource to specify Vault server, path and keys and the operator will retrieve all the needed information from vault and push them into a Kubernetes secret resource ready to be used in the cluster.
 
+# Note on upgrading to 1.0.1 onward
+
+From version `1.0.1`, k8s auth method switches from using the local *service account* configured on the operator side to using the one from the client's namespace defined in the *custom resource*.
+This is improving security but as a result, you will probably have to check your vault configuration is in adequation with this change.
+
 # Installation
 
 ## Kubernetes version requirements

@@ -28,6 +28,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+var _ reconcile.Reconciler = &ReconcileVaultSecret{}
+
 const (
 	// OperatorAppName is the name of the operator
 	OperatorAppName = "vaultsecret-operator"
@@ -44,10 +46,10 @@ var (
 	// the same secret if it changes very fast (like with database KV backend or OTP)
 	secretsLastUpdateTime      = make(map[string]time.Time)
 	secretsLastUpdateTimeMutex sync.Mutex
-)
 
-// LabelsFilter filters events on labels
-var LabelsFilter map[string]string
+	// LabelsFilter filters events on labels
+	LabelsFilter map[string]string
+)
 
 // AddLabelFilter adds a label for filtering events
 func AddLabelFilter(key, value string) {
@@ -150,8 +152,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-var _ reconcile.Reconciler = &ReconcileVaultSecret{}
-
 // ReconcileVaultSecret reconciles a VaultSecret object
 type ReconcileVaultSecret struct {
 	// This client, initialized using mgr.Client() above, is a split client
@@ -194,7 +194,7 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 	now := time.Now()
 	if now.Sub(ti) > MinTimeMsBetweenSecretUpdate {
 		// Define a new Secret object from CR specs
-		secretFromCR, err := newSecretForCR(CRInstance)
+		secretFromCR, err := r.newSecretForCR(CRInstance)
 		if err != nil && secretFromCR == nil {
 			// An error occurred, requeue
 			reqLogger.Error(err, "An error occurred when creating secret from CR, requeuing.")
@@ -245,7 +245,7 @@ func (r *ReconcileVaultSecret) Reconcile(request reconcile.Request) (reconcile.R
 	return reconcile.Result{RequeueAfter: CRInstance.Spec.SyncPeriod.Duration}, err
 }
 
-func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
+func (r *ReconcileVaultSecret) newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 	reqLogger := log.WithValues("func", "newSecretForCR")
 	operatorName := os.Getenv("OPERATOR_NAME")
 	if operatorName == "" {
@@ -280,7 +280,7 @@ func newSecretForCR(cr *maupuv1beta1.VaultSecret) (*corev1.Secret, error) {
 	}
 
 	// Authentication provider
-	authProvider, err := cr.GetVaultAuthProvider()
+	authProvider, err := cr.GetVaultAuthProvider(r.client)
 	if err != nil {
 		return nil, err
 	}

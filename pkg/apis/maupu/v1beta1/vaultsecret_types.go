@@ -36,6 +36,8 @@ type VaultSecretSpecConfigAuth struct {
 type KubernetesAuthType struct {
 	Role    string `json:"role,required"`
 	Cluster string `json:"cluster,required"`
+	// ServiceAccount to use for authentication, using "default" if not provided
+	ServiceAccount string `json:"serviceAccount,omitempty"`
 }
 
 // AppRoleAuthType AppRole authentication type

@@ -20,7 +20,7 @@ jobs:
               cd $GOPATH/src/github.com/operator-framework
               git clone https://github.com/operator-framework/operator-sdk.git
               cd $GOPATH/src/github.com/operator-framework/operator-sdk
-              git checkout master
+              git checkout v0.12.0
               make tidy
               make install
       - persist_to_workspace:

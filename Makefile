@@ -57,6 +57,7 @@ CI-process-release:
 		-r $(CIRCLE_PROJECT_REPONAME) \
 		-c $(CIRCLE_SHA1) \
 		-n "Release v$(CIRCLE_TAG)" \
+		-b "$(shell git log --format=%B -n1 $(CIRCLE_SHA1))" \
 		-delete \
 		$(CIRCLE_TAG) release/
 

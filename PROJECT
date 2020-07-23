@@ -1,0 +1,10 @@
+domain:
+layout: go.kubebuilder.io/v2
+repo: github.com/nmaupu/vault-secret
+resources:
+- group: maupu.org
+  kind: VaultSecret
+  version: v1beta1
+version: 3-alpha
+plugins:
+  go.operator-sdk.io/v2-alpha: {}

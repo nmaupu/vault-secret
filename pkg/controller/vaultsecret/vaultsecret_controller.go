@@ -279,6 +279,11 @@ func (r *ReconcileVaultSecret) newSecretForCR(cr *maupuv1beta1.VaultSecret) (*co
 		labels[key] = val
 	}
 
+	annotations := map[string]string{}
+	for key, val := range cr.Spec.SecretAnnotations {
+		annotations[key] = val
+	}
+
 	// Authentication provider
 	authProvider, err := cr.GetVaultAuthProvider(r.client)
 	if err != nil {
@@ -376,6 +381,7 @@ func (r *ReconcileVaultSecret) newSecretForCR(cr *maupuv1beta1.VaultSecret) (*co
 			Name:      secretName,
 			Namespace: cr.Namespace,
 			Labels:    labels,
+			Annotations: annotations,
 		},
 		Data: secrets,
 		Type: secretType,

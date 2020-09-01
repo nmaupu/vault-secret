@@ -9,20 +9,23 @@ var (
 	log = logf.Log.WithName("vault-auth-provider")
 )
 
-type VaultConfig struct {
+// Config is a struct to configure a vault connection
+type Config struct {
 	Address   string
 	Namespace string
 	Insecure  bool
 }
 
-func NewVaultConfig(address string) *VaultConfig {
-	return &VaultConfig{
+// NewConfig creates a pointer to a VaultConfig struct
+func NewConfig(address string) *Config {
+	return &Config{
 		Address:   address,
 		Namespace: "",
 		Insecure:  false,
 	}
 }
 
-type VaultAuthProvider interface {
-	Login(*VaultConfig) (*vapi.Client, error)
+// AuthProvider is an interface to abstract vault methods' connection
+type AuthProvider interface {
+	Login(*Config) (*vapi.Client, error)
 }

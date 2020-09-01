@@ -2,6 +2,9 @@ package vault
 
 import "fmt"
 
+// KVWarning is the warning returned by the vault API when the K/V path is invalid (wrong version)
+const KVWarning = "Invalid path for a versioned K/V secrets engine."
+
 // WrongVersionError represents an error raised when the KV version is not correct
 type WrongVersionError struct {
 	Message string

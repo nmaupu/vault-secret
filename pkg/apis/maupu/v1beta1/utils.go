@@ -21,7 +21,7 @@ func (a BySecretKey) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a BySecretKey) Less(i, j int) bool { return a[i].SecretKey < a[j].SecretKey }
 
 // GetVaultAuthProvider implem from custom resource object
-func (cr *VaultSecret) GetVaultAuthProvider(c client.Client) (nmvault.VaultAuthProvider, error) {
+func (cr *VaultSecret) GetVaultAuthProvider(c client.Client) (nmvault.AuthProvider, error) {
 	// Checking order:
 	//   - Token
 	//   - AppRole

@@ -2,25 +2,27 @@ package vault
 
 import (
 	"crypto/tls"
-	vapi "github.com/hashicorp/vault/api"
 	"net/http"
+
+	vapi "github.com/hashicorp/vault/api"
 )
 
-var (
-	_ VaultAuthProvider = TokenProvider{}
-)
+var _ AuthProvider = (*TokenProvider)(nil)
 
+// TokenProvider connects to vaut using a bare token
 type TokenProvider struct {
 	Token string
 }
 
+// NewTokenProvider creates a pointer to a TokenProvider
 func NewTokenProvider(token string) *TokenProvider {
 	return &TokenProvider{
 		Token: token,
 	}
 }
 
-func (t TokenProvider) Login(c *VaultConfig) (*vapi.Client, error) {
+// Login - godoc
+func (t TokenProvider) Login(c *Config) (*vapi.Client, error) {
 	log.Info("Authenticating using Token auth method")
 	config := vapi.DefaultConfig()
 	config.Address = c.Address

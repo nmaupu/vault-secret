@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	_ VaultAuthProvider = KubernetesProvider{}
+	_ AuthProvider = KubernetesProvider{}
 )
 
 // KubernetesProvider is a provider to authenticate using the Vault Kubernetes Auth Method plugin
@@ -38,7 +38,7 @@ func (k *KubernetesProvider) SetJWT(jwt string) {
 }
 
 // Login - godoc
-func (k KubernetesProvider) Login(c *VaultConfig) (*vapi.Client, error) {
+func (k KubernetesProvider) Login(c *Config) (*vapi.Client, error) {
 	reqLogger := log.WithValues("func", "KubernetesProvider.Login")
 	reqLogger.Info("Authenticating using Kubernetes auth method")
 

@@ -189,6 +189,7 @@ func (r *VaultSecretReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 
 				secret.Data = secretData
 				secret.Type = secretType
+				secret.Annotations = CRInstance.Spec.SecretAnnotations
 
 				if err = controllerutil.SetControllerReference(CRInstance, secret, r.Scheme); err != nil {
 					return err
@@ -309,7 +310,6 @@ func (r *VaultSecretReconciler) readSecretData(cr *maupuv1beta1.VaultSecret) (ma
 		})
 	}
 
-	// Handle return
 	// Error is returned along with secret if it occurred at least once during loop
 	// In case of error, we only return secrets that we could read. The caller has to handle itself.
 	return secrets, statusEntries, nil

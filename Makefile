@@ -117,3 +117,25 @@ bundle: manifests
 # Build the bundle image.
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+
+## custom tasks
+.PHONY: CI-prepare-release
+CI-prepare-release:
+	mkdir release/manifests/crds
+	cp config/crd/bases/maupu.org_vaultsecrets.yaml release/manifests/crds
+	tar cfz release/vault-secret-manifests-$(CIRCLE_TAG).tar.gz -C release manifests
+	rm -rf release/manifests/
+	sed -i -e "s/latest/$(CIRCLE_TAG)/g" version/version.go
+	RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o release/vault-secret-$(CIRCLE_TAG)-linux-amd64 main.go
+
+.PHONY: CI-process-release
+CI-process-release:
+	@echo "Version to be released: $(CIRCLE_TAG)"
+	ghr -t $(GITHUB_TOKEN) \
+		-u $(CIRCLE_PROJECT_USERNAME) \
+		-r $(CIRCLE_PROJECT_REPONAME) \
+		-c $(CIRCLE_SHA1) \
+		-n "Release v$(CIRCLE_TAG)" \
+		-b "$(shell git log --format=%B -n1 $(CIRCLE_SHA1))" \
+		-delete \
+		$(CIRCLE_TAG) release/

@@ -187,7 +187,13 @@ func (r *VaultSecretReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 					secret.Labels[k] = v
 				}
 
-				secret.Data = secretData
+				// Set data
+				if secret.Data == nil {
+					secret.Data = make(map[string][]byte)
+				}
+				for key, data := range secretData {
+					secret.Data[key] = data
+				}
 				secret.Type = secretType
 				secret.Annotations = CRInstance.Spec.SecretAnnotations
 

@@ -17,6 +17,7 @@ limitations under the License.
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -131,7 +132,6 @@ func (r *VaultSecretReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 			"app.kubernetes.io/managed-by": operatorName,
 			"crName":                       CRInstance.Name,
 			"crNamespace":                  CRInstance.Namespace,
-			"lastUpdate":                   time.Now().Format(TimeFormat),
 		}
 
 		// Adding filtered labels
@@ -187,12 +187,19 @@ func (r *VaultSecretReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 					secret.Labels[k] = v
 				}
 
-				// Set data
+				// Set data and update lastUpdate if data changed
+				var changed bool
 				if secret.Data == nil {
 					secret.Data = make(map[string][]byte)
 				}
 				for key, data := range secretData {
-					secret.Data[key] = data
+					if changed || !bytes.Equal(secret.Data[key], data) {
+						secret.Data[key] = data
+						changed = true
+					}
+				}
+				if changed {
+					secret.Labels["lastUpdate"] = time.Now().Format(TimeFormat)
 				}
 				secret.Type = secretType
 				secret.Annotations = CRInstance.Spec.SecretAnnotations

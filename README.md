@@ -68,6 +68,8 @@ spec:
   secretName: vault-secret-test
   secretLabels:
     foo: bar
+  secretAnnotations:
+    foo: bar
   secrets:
     - secretKey: username
       kvPath: secrets/kv
@@ -93,7 +95,7 @@ This secret would contain two keys filled with vault content:
 
 ---
 
-It's possible to add labels to the generated secret with `secretLabels`.
+It's possible to add annotations and labels to the generated secret with `secretAnnotations` and `secretLabels`.
 
 Here is another example for "dockerconfig" secrets:
 ```

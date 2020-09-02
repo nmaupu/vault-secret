@@ -148,6 +148,13 @@ func (in *VaultSecretSpec) DeepCopyInto(out *VaultSecretSpec) {
 			(*out)[key] = val
 		}
 	}
+	if in.SecretAnnotations != nil {
+		in, out := &in.SecretAnnotations, &out.SecretAnnotations
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	out.SyncPeriod = in.SyncPeriod
 }
 

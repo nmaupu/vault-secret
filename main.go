@@ -25,7 +25,7 @@ import (
 	"strings"
 
 	vaultsecret "github.com/nmaupu/vault-secret/controllers"
-	appVersion "github.com/nmaupu/vault-secret/pkg/version"
+	appVersion "github.com/nmaupu/vault-secret/version"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"k8s.io/apimachinery/pkg/runtime"

@@ -24,30 +24,24 @@ import (
 	"sync"
 	"time"
 
-	maupuv1beta1 "github.com/nmaupu/vault-secret/pkg/apis/maupu/v1beta1"
+	"github.com/go-logr/logr"
+	maupuv1beta1 "github.com/nmaupu/vault-secret/api/v1beta1"
 	nmvault "github.com/nmaupu/vault-secret/pkg/vault"
 	appVersion "github.com/nmaupu/vault-secret/version"
-	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var _ reconcile.Reconciler = (*ReconcileVaultSecret)(nil)
+var _ reconcile.Reconciler = (*VaultSecretReconciler)(nil)
 
 const (
 	// OperatorAppName is the name of the operator
@@ -97,10 +91,10 @@ func AddLabelFilter(key, value string) {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *VaultSecretReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
-	reqLogger.Info("Reconciling VaultSecret")	
+	reqLogger := log.WithValues("Request.Namespace", req.Namespace, "Request.Name", req.Name)
+	reqLogger.Info("Reconciling VaultSecret")
 	ctx := context.Background()
-	
+
 	// Fetch the VaultSecret CRInstance
 	CRInstance := &maupuv1beta1.VaultSecret{}
 	err := r.Get(ctx, req.NamespacedName, CRInstance)
@@ -164,12 +158,12 @@ func (r *VaultSecretReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		var operationResult controllerutil.OperationResult
 
 		secret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{Name: secretName, Namespace: request.Namespace},
+			ObjectMeta: metav1.ObjectMeta{Name: secretName, Namespace: req.Namespace},
 		}
 
 		err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 			var err error
-			operationResult, err = controllerutil.CreateOrUpdate(context.TODO(), r.client, secret, func() error {
+			operationResult, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, secret, func() error {
 				// As type field is immutable we quickly update the resource before reading from vault.
 				// We expect a genuine error from the api server.
 				if secret.Type != secretType && secret.Type != "" {
@@ -196,7 +190,7 @@ func (r *VaultSecretReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 				secret.Data = secretData
 				secret.Type = secretType
 
-				if err = controllerutil.SetControllerReference(CRInstance, secret, r.scheme); err != nil {
+				if err = controllerutil.SetControllerReference(CRInstance, secret, r.Scheme); err != nil {
 					return err
 				}
 
@@ -216,7 +210,7 @@ func (r *VaultSecretReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		var statusEntriesErr error
 		if statusEntries != nil && !equality.Semantic.DeepEqual(CRInstance.Status.Entries, statusEntries) {
 			CRInstance.Status.Entries = statusEntries
-			if statusEntriesErr = r.client.Status().Update(context.TODO(), CRInstance); err != nil {
+			if statusEntriesErr = r.Client.Status().Update(context.TODO(), CRInstance); err != nil {
 				reqLogger.Error(err, "Failed to update VaultSecret status")
 				return reconcile.Result{}, statusEntriesErr
 			}
@@ -254,11 +248,11 @@ func (r *VaultSecretReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 	return reconcile.Result{RequeueAfter: CRInstance.Spec.SyncPeriod.Duration}, err
 }
 
-func (r *ReconcileVaultSecret) readSecretData(cr *maupuv1beta1.VaultSecret) (map[string][]byte, []maupuv1beta1.VaultSecretStatusEntry, error) {
+func (r *VaultSecretReconciler) readSecretData(cr *maupuv1beta1.VaultSecret) (map[string][]byte, []maupuv1beta1.VaultSecretStatusEntry, error) {
 	reqLogger := log.WithValues("func", "readSecretData")
 
 	// Authentication provider
-	authProvider, err := cr.GetVaultAuthProvider(r.client)
+	authProvider, err := cr.GetVaultAuthProvider(r.Client)
 	if err != nil {
 		return nil, nil, err
 	}

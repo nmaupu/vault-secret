@@ -373,9 +373,9 @@ func (r *ReconcileVaultSecret) newSecretForCR(cr *maupuv1beta1.VaultSecret) (*co
 	}
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
-			Namespace: cr.Namespace,
-			Labels:    labels,
+			Name:        secretName,
+			Namespace:   cr.Namespace,
+			Labels:      labels,
 			Annotations: cr.Spec.SecretAnnotations,
 		},
 		Data: secrets,

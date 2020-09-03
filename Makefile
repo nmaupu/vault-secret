@@ -4,6 +4,9 @@ export GO111MODULE=on
 VERSION ?= 1.0.1
 # Default bundle image tag
 BUNDLE_IMG ?= controller-bundle:$(VERSION)
+# Default version used when preparing for a release, image building and pushing
+RELEASE_NAME ?= $(CIRCLE_TAG)
+
 # Options for 'bundle-build'
 ifneq ($(origin CHANNELS), undefined)
 BUNDLE_CHANNELS := --channels=$(CHANNELS)
@@ -49,7 +52,7 @@ uninstall: manifests kustomize
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests kustomize
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
@@ -121,12 +124,12 @@ bundle-build:
 ## custom tasks
 .PHONY: CI-prepare-release
 CI-prepare-release:
-	mkdir release/manifests/crds
+	mkdir -p release/manifests/crds
 	cp config/crd/bases/maupu.org_vaultsecrets.yaml release/manifests/crds
-	tar cfz release/vault-secret-manifests-$(CIRCLE_TAG).tar.gz -C release manifests
+	tar cfz release/vault-secret-manifests-$(RELEASE_NAME).tar.gz -C release manifests
 	rm -rf release/manifests/
-	sed -i -e "s/latest/$(CIRCLE_TAG)/g" version/version.go
-	RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o release/vault-secret-$(CIRCLE_TAG)-linux-amd64 main.go
+	sed -i -e "s/latest/$(RELEASE_NAME)/g" version/version.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o release/vault-secret-$(RELEASE_NAME)-linux-amd64 main.go
 
 .PHONY: CI-process-release
 CI-process-release:
@@ -139,3 +142,11 @@ CI-process-release:
 		-b "$(shell git log --format=%B -n1 $(CIRCLE_SHA1))" \
 		-delete \
 		$(CIRCLE_TAG) release/
+
+.PHONY: CI-docker-build
+CI-docker-build:
+	docker build . -t $(ORG_NAME)/$(PROJECT_NAME):$(RELEASE_NAME)
+
+.PHONY: CI-docker-push
+CI-docker-push:
+	docker push $(ORG_NAME)/$(PROJECT_NAME):$(RELEASE_NAME)

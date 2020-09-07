@@ -84,10 +84,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - release-{{ .Revision }}-{{ .Environment.CIRCLE_TAG }}
-      - restore_cache:
-          keys:
-            - build-{{ .Branch }}-{{ .Revision }}
+            - release-{{ .Revision }}-${CIRCLE_TAG}
       - run:
           name: Publish release on Github
           command: |
@@ -120,6 +117,8 @@ workflows:
             tags:
               only: /^\d+\.\d+\.\d+$/
       - release-github:
+          requires:
+            - prepare-release-tag
           filters:
             branches:
               ignore: /.*/

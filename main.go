@@ -26,7 +26,6 @@ import (
 
 	vaultsecret "github.com/nmaupu/vault-secret/controllers"
 	appVersion "github.com/nmaupu/vault-secret/version"
-	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -68,7 +67,6 @@ func printVersion() {
 	log.Info(fmt.Sprintf("Vault-secret operator version: %v", appVersion.Version))
 	log.Info(fmt.Sprintf("Go Version: %s", goruntime.Version()))
 	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", goruntime.GOOS, goruntime.GOARCH))
-	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
 func init() {

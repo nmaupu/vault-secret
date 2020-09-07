@@ -8,66 +8,76 @@ executors:
       - image: circleci/golang:1.13
     working_directory: /go/src/github.com/nmaupu/vault-secret
 
-jobs:
-  prepare:
-    executor: golang-executor
+# https://circleci.com/docs/2.0/reusing-config/
+commands:
+  cmd_prepare_release:
+    description: "Prepare either a test or a milestone release"
+    parameters:
+      release_name:
+        type: string
+        default: "master"
     steps:
       - checkout
       - run:
-          name: Operator-sdk installation
+          name: Preparing for release
           command: |
-              mkdir -p $GOPATH/src/github.com/operator-framework
-              cd $GOPATH/src/github.com/operator-framework
-              git clone https://github.com/operator-framework/operator-sdk.git
-              cd $GOPATH/src/github.com/operator-framework/operator-sdk
-              git checkout v0.12.0
-              make tidy
-              make install
-      - persist_to_workspace:
-          root: /go
+            RELEASE_NAME=<< parameters.release_name >> make CI-prepare-release
+      - save_cache:
+          name: Saving cache for release version
+          key: release-{{ .Revision }}-<< parameters.release_name >>
           paths:
-            - src/github.com/operator-framework/operator-sdk
-            - bin/operator-sdk
-  build:
-    executor: golang-executor
+            - release
+            - version/version.go
+  cmd_docker_build_push:
+    description: "Build and push docker image"
+    parameters:
+      image_name:
+        type: string
+        default: "test"
     steps:
       - attach_workspace:
           at: /go
       - checkout
       - restore_cache:
           keys:
-            - release-{{ .Revision }}-{{ .Environment.CIRCLE_TAG }}
+            - release-{{ .Revision }}-<< parameters.image_name >>
       - setup_remote_docker
       - run:
           name: Docker login
           command: |
             echo $DOCKER_PASSWORD | docker login --username $DOCKER_LOGIN --password-stdin
       - run:
-          name: Building application
+          name: Building docker image
           command: |
             cd $GOPATH/src/github.com/$ORG_NAME/$PROJECT_NAME
-            make build
-            make push
-            make openapi
-      - save_cache:
-          name: Saving cache for binary
-          key: build-{{ .Branch }}-{{ .Revision }}
-          paths:
-            - build/_output/bin/vault-secret
-  prepare-release:
+            RELEASE_NAME="<< parameters.image_name >>" make CI-docker-build
+      - run:
+          name: Pushing docker image
+          command: |
+            cd $GOPATH/src/github.com/$ORG_NAME/$PROJECT_NAME
+            RELEASE_NAME="<< parameters.image_name >>" make CI-docker-push
+
+jobs:
+  docker-build-push-branch:
     executor: golang-executor
     steps:
-      - checkout
-      - run:
-          name: Preparing for release
-          command: |
-            make CI-release-prepare
-      - save_cache:
-          name: Saving cache for release version
-          key: release-{{ .Revision }}-{{ .Environment.CIRCLE_TAG }}
-          paths:
-            - release
-            - version/version.go
+      - cmd_docker_build_push:
+          image_name: ${CIRCLE_BRANCH}
+  docker-build-push-tag:
+    executor: golang-executor
+    steps:
+      - cmd_docker_build_push:
+          image_name: ${CIRCLE_TAG}
+  prepare-release-branch:
+    executor: golang-executor
+    steps:
+      - cmd_prepare_release:
+          release_name: ${CIRCLE_BRANCH}
+  prepare-release-tag:
+    executor: golang-executor
+    steps:
+      - cmd_prepare_release:
+          release_name: ${CIRCLE_TAG}
   release-github:
     executor: golang-executor
     steps:
@@ -89,36 +99,27 @@ workflows:
   version: 2.1
   branch:
     jobs:
-      - prepare
-      - build:
+      - prepare-release-branch
+      - docker-build-push-branch:
           requires:
-            - prepare
+            - prepare-release-branch
   release:
     jobs:
-      - prepare:
+      - prepare-release-tag:
           filters:
             branches:
               ignore: /.*/
             tags:
               only: /^\d+\.\d+\.\d+$/
-      - prepare-release:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^\d+\.\d+\.\d+$/
-      - build:
+      - docker-build-push-tag:
           requires:
-            - prepare
-            - prepare-release
+            - prepare-release-tag
           filters:
             branches:
               ignore: /.*/
             tags:
               only: /^\d+\.\d+\.\d+$/
       - release-github:
-          requires:
-            - build
           filters:
             branches:
               ignore: /.*/

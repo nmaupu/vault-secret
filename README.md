@@ -27,11 +27,11 @@ Get the latest release from https://github.com/nmaupu/vault-secret/releases
 
 Deploy the Custom Resource Definition and the operator:
 ```
-$ kubectl apply -f deploy/crds/maupu_v1beta1_vaultsecret_crd.yaml
-$ kubectl apply -f deploy/service_account.yaml
-$ kubectl apply -f deploy/role.yaml
-$ kubectl apply -f deploy/role_binding.yaml
-$ kubectl apply -f deploy/operator.yaml
+$ kubectl apply -f config/crd/bases/maupu.org_vaultsecrets.yaml
+$ kubectl apply -f config/doc-samples/operator.yaml
+$ kubectl apply -f config/doc-samples/role.yaml
+$ kubectl apply -f config/doc-samples/role_binding.yaml
+$ kubectl apply -f config/doc-samples/service_account.yaml
 ```
 
 ### Configuration
@@ -57,7 +57,7 @@ Example usage:
 
 ## Custom resource
 
-Here is an example (`deploy/crds/maupu_v1beta1_vaultsecret_cr.yaml`) :
+Here is an example (`config/doc-samples/maupu.org_v1beta1_vaultsecrets_cr.yaml`) :
 ```
 apiVersion: maupu.org/v1beta1
 kind: VaultSecret
@@ -130,7 +130,7 @@ Secret are resynced periodically (after a maximum of 10h) but it's possible to r
 
 If your Vault is using *TLS* but if its certificates are not signed by a *known authority*, one can use the config option `insecure` to skip tls verification.
 
-Do not use `TLS_SKIP_VERIFY` env variable, **it's not** being taken into account.
+Do not use `TLS_SKIP_VERIFY` env variable when starting the operator, **it's not** being taken into account.
 
 Here is an example:
 ```
@@ -212,11 +212,12 @@ If several configuration options are specified, there are used in the following 
 
 To build, simply use *make*:
 ```
-make build
+make docker-build
+IMG=local/vault-secret:test make docker-build
 ```
 
 This task will:
-- build the binary
+- build the binary (using docker)
 - create a docker image
 
 You can then push it to any docker repository or use it locally.

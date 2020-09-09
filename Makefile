@@ -126,11 +126,13 @@ bundle-build:
 .PHONY: CI-prepare-release
 CI-prepare-release:
 	mkdir -p release/manifests/crds
-	cp config/crd/bases/maupu.org_vaultsecrets.yaml release/manifests/crds
+	cp -a config/crd/bases/maupu.org_vaultsecrets.yaml release/manifests/crds
+	cp -a config/doc-samples/* release/manifests/
 	tar cfz release/vault-secret-manifests-$(RELEASE_NAME).tar.gz -C release manifests
 	rm -rf release/manifests/
 	sed -i -e "s/latest/$(RELEASE_NAME)/g" version/version.go
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o release/vault-secret-$(RELEASE_NAME)-linux-amd64 main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 GO111MODULE=on go build -a -o release/vault-secret-$(RELEASE_NAME)-linux-arm64 main.go
 
 .PHONY: CI-process-release
 CI-process-release:

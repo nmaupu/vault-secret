@@ -6,6 +6,8 @@ VERSION ?= 1.0.1
 BUNDLE_IMG ?= controller-bundle:$(VERSION)
 # Default version used when preparing for a release, image building and pushing
 RELEASE_NAME ?= $(CIRCLE_TAG)
+GOOS ?= linux
+GOARCH ?= amd64
 
 # Options for 'bundle-build'
 ifneq ($(origin CHANNELS), undefined)
@@ -146,7 +148,7 @@ CI-process-release:
 
 .PHONY: CI-docker-build
 CI-docker-build:
-	docker build --no-cache . -t $(ORG_NAME)/$(PROJECT_NAME):$(RELEASE_NAME)
+	docker build --build-arg=GOOS=$(GOOS) --build-arg=GOARCH=$(GOARCH) --no-cache . -t $(ORG_NAME)/$(PROJECT_NAME):$(RELEASE_NAME)
 
 .PHONY: CI-docker-push
 CI-docker-push:

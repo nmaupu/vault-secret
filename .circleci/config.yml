@@ -29,45 +29,47 @@ commands:
             - release
             - version/version.go
   cmd_docker_build_push:
-    description: "Build and push docker image"
+    description: "Build and push docker images"
     parameters:
-      image_name:
+      tag_name:
         type: string
         default: "test"
+      cpu_platforms:
+        type: string
+        default: "linux/amd64 linux/arm64"
     steps:
       - attach_workspace:
           at: /go
       - checkout
       - restore_cache:
           keys:
-            - release-{{ .Revision }}-<< parameters.image_name >>
+            - release-{{ .Revision }}-<< parameters.tag_name >>
       - setup_remote_docker
       - run:
           name: Docker login
           command: |
             echo $DOCKER_PASSWORD | docker login --username $DOCKER_LOGIN --password-stdin
       - run:
-          name: Building docker image
+          name: Building and pushing docker image
           command: |
             cd $GOPATH/src/github.com/$ORG_NAME/$PROJECT_NAME
-            RELEASE_NAME="<< parameters.image_name >>" make CI-docker-build
-      - run:
-          name: Pushing docker image
-          command: |
-            cd $GOPATH/src/github.com/$ORG_NAME/$PROJECT_NAME
-            RELEASE_NAME="<< parameters.image_name >>" make CI-docker-push
+            for platform in << parameters.cpu_platforms >>; do
+              export GOOS="${platform%/*}"
+              export GOARCH="${platform#*/}"
+              RELEASE_NAME="<< parameters.tag_name >>-${GOOS}-${GOARCH}" make CI-docker-build CI-docker-push
+            done
 
 jobs:
   docker-build-push-branch:
     executor: golang-executor
     steps:
       - cmd_docker_build_push:
-          image_name: ${CIRCLE_BRANCH}
+          tag_name: ${CIRCLE_BRANCH}
   docker-build-push-tag:
     executor: golang-executor
     steps:
       - cmd_docker_build_push:
-          image_name: ${CIRCLE_TAG}
+          tag_name: ${CIRCLE_TAG}
   prepare-release-branch:
     executor: golang-executor
     steps:

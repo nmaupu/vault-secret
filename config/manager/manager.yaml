@@ -17,10 +17,10 @@ spec:
       containers:
         - name: vault-secret
           # Replace this with the built image name
-          image: nmaupu/vault-secret:latest
+          image: nmaupu/vault-secret:master
           imagePullPolicy: Always
           command:
-          - vault-secret
+          - /manager
           env:
             - name: WATCH_NAMESPACE
               valueFrom:

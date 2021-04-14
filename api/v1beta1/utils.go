@@ -60,8 +60,12 @@ func (cr *VaultSecret) GetVaultAuthProvider(c client.Client) (nmvault.AuthProvid
 		if saName == "" {
 			saName = "default"
 		}
-
-		tok, err := k8sutils.GetTokenFromSA(c, cr.Namespace, saName)
+		// Retrieving the namespace of serviceAccount from configuration
+		saNamespace := cr.Spec.Config.Auth.Kubernetes.ServiceAccountNamespace
+		if saNamespace == "" {
+			saNamespace = cr.Namespace
+		}
+		tok, err := k8sutils.GetTokenFromSA(c, saNamespace, saName)
 		if err != nil {
 			return nil, err
 		}

@@ -55,6 +55,7 @@ type KubernetesAuthType struct {
 	Cluster string `json:"cluster,required"`
 	// ServiceAccount to use for authentication, using "default" if not provided
 	ServiceAccount string `json:"serviceAccount,omitempty"`
+	ServiceAccountNamespace string `json:"serviceAccountNamespace,omitempty"`
 }
 
 // AppRoleAuthType AppRole authentication type

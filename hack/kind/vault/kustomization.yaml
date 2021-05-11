@@ -1,0 +1,22 @@
+# Adds namespace to all resources.
+namespace: vault
+
+# Labels to add to all resources and selectors.
+#commonLabels:
+#  someName: someValue
+
+resources:
+- v1_namespace_vault.yaml
+- apps_v1_deployment_vault.yaml
+- rbac.authorization.k8s.io_v1beta1_clusterrolebinding_role-tokenreview-binding.yaml
+- v1_service_vault.yaml
+- v1_serviceaccount_vault.yaml
+
+
+configMapGenerator:
+- name: vault-config
+  files:
+    - vault-init-job.bash
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization

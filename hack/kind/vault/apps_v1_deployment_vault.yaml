@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: vault
+  name: vault
+  namespace: vault
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vault
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: vault
+      name: vault
+    spec:
+      serviceAccountName: vault
+      volumes:
+      - configMap:
+          name: vault-config
+        name: vault-config
+      containers:
+      - args:
+        - server
+        - -dev
+        - -dev-listen-address=0.0.0.0:8200
+        - -dev-root-token-id=root
+        image: docker.io/library/vault:1.7.0
+        name: vault
+        securityContext:
+          capabilities:
+            add:
+            - IPC_LOCK
+      - command:
+        - /bin/sh
+        - -c
+        - /bin/sh /vault-config/vault-init-job.bash && sleep 3650d
+        env:
+        - name: VAULT_ADDR
+          value: http://localhost:8200
+        - name: VAULT_TOKEN
+          value: root
+        image: docker.io/library/vault:1.7.0
+        name: vault-init
+        volumeMounts:
+        - mountPath: /vault-config
+          name: vault-config

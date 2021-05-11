@@ -1,0 +1,14 @@
+# Adds namespace to all resources.
+namespace: test
+
+# Labels to add to all resources and selectors.
+#commonLabels:
+#  someName: someValue
+
+resources:
+- namespace.yaml
+- secret.yaml
+
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization

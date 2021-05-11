@@ -11,4 +11,4 @@
 * ./kind.sh create
 * kubectl get pod --all-namespaces -w 
 * wait for `secret` named `secret` in `test` namespace
-
+* ./kind.sh delete

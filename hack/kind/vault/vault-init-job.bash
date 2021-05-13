@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -eu -o pipefail
+set -eu
 
 main() {
   vault auth enable -path=kubernetes/local kubernetes
@@ -27,7 +27,7 @@ write_secret() {
   key=$2
   value=$3
 
-  vault kv put $path $key=$value
+  vault kv put "$path" "$key"="$value"
 }
 
 echo "Initializing vault..."

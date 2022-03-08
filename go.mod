@@ -15,3 +15,5 @@ require (
 )
 
 replace k8s.io/client-go => k8s.io/client-go v0.18.2
+
+replace github.com/googleapis/gnostic v0.6.6 => github.com/google/gnostic v0.6.6

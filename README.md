@@ -212,6 +212,7 @@ If several configuration options are specified, there are used in the following 
 
 - Operator SDK installation (https://github.com/operator-framework/operator-sdk)
 - Go Dep (https://golang.github.io/dep/docs/installation.html)
+- Kubebuilder (https://github.com/kubernetes-sigs/kubebuilder)
 
 ## Building
 

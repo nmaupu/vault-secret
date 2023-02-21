@@ -258,7 +258,7 @@ func (r *VaultSecretReconciler) readSecretData(cr *maupuv1beta1.VaultSecret) (ma
 	reqLogger := log.WithValues("func", "readSecretData")
 
 	// Authentication provider
-	authProvider, err := cr.GetVaultAuthProvider(r.Client)
+	authProvider, err := cr.GetVaultAuthProvider()
 	if err != nil {
 		return nil, nil, err
 	}

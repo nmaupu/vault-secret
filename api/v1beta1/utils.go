@@ -21,7 +21,6 @@ import (
 
 	"github.com/nmaupu/vault-secret/pkg/k8sutils"
 	nmvault "github.com/nmaupu/vault-secret/pkg/vault"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // BySecretKey allows sorting an array of VaultSecretSpecSecret by SecretKey
@@ -37,7 +36,7 @@ func (a BySecretKey) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a BySecretKey) Less(i, j int) bool { return a[i].SecretKey < a[j].SecretKey }
 
 // GetVaultAuthProvider implem from custom resource object
-func (cr *VaultSecret) GetVaultAuthProvider(c client.Client) (nmvault.AuthProvider, error) {
+func (cr *VaultSecret) GetVaultAuthProvider() (nmvault.AuthProvider, error) {
 	// Checking order:
 	//   - Token
 	//   - AppRole
@@ -55,13 +54,8 @@ func (cr *VaultSecret) GetVaultAuthProvider(c client.Client) (nmvault.AuthProvid
 			cr.Spec.Config.Auth.AppRole.SecretID,
 		), nil
 	} else if cr.Spec.Config.Auth.Kubernetes.Role != "" {
-		// Retrieving token from the serviceAccount configured
-		saName := cr.Spec.Config.Auth.Kubernetes.ServiceAccount
-		if saName == "" {
-			saName = "default"
-		}
 
-		tok, err := k8sutils.GetTokenFromSA(c, cr.Namespace, saName)
+		tok, err := k8sutils.GetTokenFromSA()
 		if err != nil {
 			return nil, err
 		}

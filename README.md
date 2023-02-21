@@ -12,11 +12,6 @@
 From version `1.0.1`, k8s auth method switches from using the local *service account* configured on the operator side to using the one from the client's namespace defined in the *custom resource*.
 This is improving security but as a result, you will probably have to check your vault configuration is in adequation with this change.
 
-# Note for Kubernetes 1.24+
-
-From Kubernetes 1.24, secrets are not created along a service account anymore. A secret needs to be manually created to make the controller happy.
-See https://github.com/nmaupu/vault-secret/issues/40 for more info.
-
 # Installation
 
 ## Kubernetes version requirements
